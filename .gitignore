@@ -1,38 +1,39 @@
-# Virtual Environments
-.venv/
-venv/
-env/
-ENV/
+# 🎵 Spotify Music Recommendation System - Git Ignore
 
-# Python Bytecode
+# =============================================================================
+# Python
+# =============================================================================
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
+
+# Distribution / packaging
 .Python
-
-# Distribution / Packaging
-dist/
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
 *.egg-info/
+.installed.cfg
 *.egg
+MANIFEST
 
-# Environment variables
-.env
-.env.local
+# PyInstaller
+*.manifest
+*.spec
 
-# Jupyter Notebooks
-.ipynb_checkpoints
-*/.ipynb_checkpoints/*
-profile_default/
-ipython_config.py
-
-# IDE specific files
-.idea/
-.vscode/
-*.swp
-*.swo
-.DS_Store
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 htmlcov/
@@ -44,14 +45,401 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+*.py,cover
 .hypothesis/
-pytest_cache/
+.pytest_cache/
+cover/
 
-# Datasets and large files
+# Translations
+*.mo
+*.pot
+
+# Django/Flask stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# =============================================================================
+# Jupyter Notebooks
+# =============================================================================
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Jupyter cache
+.jupyter/
+
+# =============================================================================
+# Data Science & Machine Learning
+# =============================================================================
+# Large datasets (add specific patterns as needed)
 *.csv
-*.dat
-*.out
+*.tsv
+*.parquet
+*.h5
+*.hdf5
+*.pickle
+*.pkl
+*.joblib
+
+# But keep small example/test files
+!**/example*.csv
+!**/test*.csv
+!**/sample*.csv
+
+# Model files (large binary files)
+*.model
+*.bin
+*.weights
+*.h5
+*.keras
+
+# Trained models directory (but keep structure)
+data/models/*.pkl
+data/models/*.joblib
+data/models/*.model
+!data/models/.gitkeep
+
+# Large data files
+data/raw/*.csv
+data/processed/*.csv
+data/external/*.csv
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+
+# Visualization outputs
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.svg
+!docs/images/*.png
+!docs/images/*.jpg
+!README_images/
+
+# =============================================================================
+# Docker
+# =============================================================================
+# Docker build context
+.dockerignore
+
+# Docker volumes
+docker-volumes/
+
+# Docker Compose override files
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# =============================================================================
+# Streamlit
+# =============================================================================
+# Streamlit cache
+.streamlit/
+
+# Streamlit secrets
+streamlit/secrets.toml
+
+# =============================================================================
+# Operating System
+# =============================================================================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# IDEs & Editors
+# =============================================================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*~
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# Logs & Temporary Files
+# =============================================================================
+# Log files
+*.log
+logs/
+log/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+
+# Runtime data
+pids
 *.pid
-*.gz
-*.zip
-data/
+*.seed
+*.pid.lock
+
+# =============================================================================
+# Configuration & Secrets
+# =============================================================================
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# API keys and secrets
+secrets/
+config/secrets/
+*.key
+*.pem
+*.crt
+
+# Local configuration overrides
+config/local/
+local_config.py
+local_settings.py
+
+# =============================================================================
+# Build & Deployment
+# =============================================================================
+# Build directories
+build/
+dist/
+*.tar.gz
+
+# Deployment files
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Kubernetes
+*.kubeconfig
+
+# =============================================================================
+# Project Specific
+# =============================================================================
+# Conda environment
+.conda/
+
+# Model training outputs
+experiments/
+runs/
+outputs/
+
+# Data downloads
+downloads/
+tmp/
+
+# Analysis notebooks (personal)
+scratch/
+exploratory/
+personal_notebooks/
+
+# Large audio files
+*.mp3
+*.wav
+*.flac
+*.m4a
+!samples/*.mp3
+
+# Cache directories
+.cache/
+cache/
+
+# Backup files
+backups/
+*.backup
+
+# =============================================================================
+# Documentation Build
+# =============================================================================
+# MkDocs
+/site
+
+# Sphinx
+docs/_build/
+
+# =============================================================================
+# Testing
+# =============================================================================
+# pytest
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+
+# =============================================================================
+# Performance & Profiling
+# =============================================================================
+# Profiling output
+*.prof
+*.lprof
+
+# =============================================================================
+# Keep Important Empty Directories
+# =============================================================================
+# Use .gitkeep files for important empty directories
+!**/.gitkeep
+
+# =============================================================================
+# Allow Important Config Files
+# =============================================================================
+!docker-compose.yml
+!Dockerfile
+!requirements.txt
+!setup.py
+!pyproject.toml
