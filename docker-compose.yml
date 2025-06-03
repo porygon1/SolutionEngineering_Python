@@ -7,9 +7,32 @@ services:
     volumes:
       - ./data/raw:/app/data/raw:ro  # Raw data (read-only)
       - ./data/models:/app/data/models:ro  # Models (read-only)
+      - ./logs:/app/logs  # Logs directory (read-write)
     environment:
+      # Streamlit configuration
       - STREAMLIT_SERVER_ENABLECORS=false
       - STREAMLIT_SERVER_ENABLEXSRFPROTECTION=false
+      # Spotify API configuration (will be loaded from .env file if available)
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID:-}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET:-}
+      - SPOTIFY_API_BASE_URL=${SPOTIFY_API_BASE_URL:-https://api.spotify.com/v1}
+      - SPOTIFY_TOKEN_URL=${SPOTIFY_TOKEN_URL:-https://accounts.spotify.com/api/token}
+      - SPOTIFY_REQUESTS_PER_SECOND=${SPOTIFY_REQUESTS_PER_SECOND:-10}
+      - SPOTIFY_MAX_RETRIES=${SPOTIFY_MAX_RETRIES:-3}
+      - ENABLE_SPOTIFY_API=${ENABLE_SPOTIFY_API:-true}
+      # Advanced Logging Configuration
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENABLE_FILE_LOGGING=${ENABLE_FILE_LOGGING:-true}
+      - ENABLE_JSON_LOGGING=${ENABLE_JSON_LOGGING:-false}
+      - ENABLE_PERFORMANCE_LOGGING=${ENABLE_PERFORMANCE_LOGGING:-true}
+      - MAX_LOG_FILES=${MAX_LOG_FILES:-30}
+      - MAX_LOG_SIZE_MB=${MAX_LOG_SIZE_MB:-50}
+      # Optional: Additional logging configuration
+      - LOG_FORMAT=${LOG_FORMAT:-standard}
+      - LOG_TO_CONSOLE=${LOG_TO_CONSOLE:-true}
+      - LOG_TIMEZONE=${LOG_TIMEZONE:-UTC}
+    env_file:
+      - .env  # Load environment variables from .env file (if it exists)
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]

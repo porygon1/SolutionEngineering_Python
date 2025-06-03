@@ -41,13 +41,42 @@ This Streamlit application provides an intuitive interface for exploring and dis
 ### Application Structure
 ```
 streamlit_app/
-├── app.py                    # Main application file (708 lines)
-├── requirements.txt          # Python dependencies
-├── Dockerfile               # Container configuration
-└── README.md               # This documentation
+├── app.py                      # Main application entry point (415 lines)
+├── components/                 # UI Components
+│   ├── __init__.py
+│   ├── audio_player.py        # Audio playback functionality
+│   ├── dashboard.py           # Admin features and logging
+│   ├── notifications.py       # User feedback system
+│   ├── search_interface.py    # Song search and selection
+│   └── track_cards.py         # Track display components
+├── utils/                      # Utility Functions
+│   ├── __init__.py
+│   ├── data_utils.py          # Data loading and processing
+│   ├── recommendations.py     # ML recommendation engines
+│   └── styles.py              # CSS styling utilities
+├── static/                     # Static Assets
+│   └── css/
+│       └── styles.css         # Application stylesheets
+├── requirements.txt           # Python dependencies
+├── Dockerfile                # Container configuration
+├── logging_config.py         # Advanced logging system
+├── spotify_api_client.py     # Spotify API integration
+└── README.md                 # This documentation
 ```
 
 ### Core Components
+
+#### 🎨 **User Interface Components**
+- **Track Cards**: Interactive recommendation display with audio previews
+- **Search Interface**: Advanced song search with fuzzy matching
+- **Audio Player**: Embedded Spotify preview functionality
+- **Notifications**: User feedback and status updates
+- **Dashboard**: Administrative features and system monitoring
+
+#### 🔧 **Utility Modules**
+- **Data Utils**: Caching, loading, and data processing functions
+- **Recommendations**: KNN and clustering recommendation algorithms  
+- **Styles**: CSS management and dynamic styling
 
 #### 🔄 **Data Pipeline**
 1. **Data Loading**: Cached loading of CSV datasets
@@ -202,214 +231,115 @@ MODELS_PATH=/app/data/models
 # .streamlit/config.toml
 [server]
 port = 8501
+headless = true
 enableCORS = false
-enableXsrfProtection = false
 
 [theme]
 primaryColor = "#1DB954"
 backgroundColor = "#FFFFFF"
 secondaryBackgroundColor = "#F0F2F6"
 textColor = "#262730"
-
-[client]
-showErrorDetails = true
 ```
 
-## 🧪 Testing & Validation
-
-### Manual Testing
-```bash
-# Test data loading
-python -c "import app; print('Data loading test passed')"
-
-# Test model loading
-python -c "import app; models = app.load_all_models(); print(f'Loaded {len(models)} models')"
-
-# Test audio URL validation
-python -c "import app; print(app.check_audio_url('https://p.scdn.co/mp3-preview/test'))"
-```
-
-### Performance Testing
-```bash
-# Memory usage monitoring
-python -c "
-import psutil
-import app
-process = psutil.Process()
-print(f'Memory usage: {process.memory_info().rss / 1024 / 1024:.1f} MB')
-"
-
-# Recommendation speed test
-python -c "
-import time
-import app
-models = app.load_all_models()
-start = time.time()
-# Test recommendation generation
-print(f'Recommendation time: {time.time() - start:.2f}s')
-"
-```
-
-## 🔧 Customization
-
-### Adding New Features
-1. **Audio Features**: Modify feature extraction in data processing
-2. **Recommendation Algorithms**: Extend the ML pipeline
-3. **UI Components**: Add new Streamlit widgets and layouts
-4. **Visualization**: Create additional Plotly charts
-
-### Styling Customization
-```python
-# Custom CSS injection
-st.markdown("""
-<style>
-    .custom-audio-player {
-        border-radius: 15px;
-        padding: 20px;
-        background: linear-gradient(45deg, #1DB954, #1ed760);
-    }
-</style>
-""", unsafe_allow_html=True)
-```
-
-### Data Integration
-```python
-# Adding new data sources
-@st.cache_data
-def load_custom_data(file_path):
-    """Load additional datasets"""
-    return pd.read_csv(file_path)
-
-# Integration example
-custom_data = load_custom_data("data/raw/custom_features.csv")
-```
-
-## 📈 Performance Optimization
-
-### Caching Strategy
-- **@st.cache_data**: Data loading and processing
-- **@st.cache_resource**: Model loading and expensive computations
-- **Session State**: User selections and temporary data
-
-### Memory Management
-```python
-# Efficient data handling
-- Use pandas chunks for large datasets
-- Implement lazy loading for audio features
-- Clear unused variables in functions
-```
-
-### Speed Optimization
-```python
-# Fast recommendations
-- Pre-compute embeddings
-- Use efficient similarity metrics
-- Implement result pagination
-```
-
-## 🚨 Troubleshooting
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-#### **Audio Not Playing**
+#### **Models Not Loading**
 ```bash
-# Check preview URL format
-df['preview_url'].head()
-
-# Validate URLs
-df['preview_url'].apply(lambda x: x.startswith('http')).sum()
-```
-
-#### **Model Loading Errors**
-```bash
-# Verify model files exist
+# Check if models directory exists and contains required files
 ls -la ../data/models/
-
-# Check file permissions
-stat ../data/models/hdbscan_model.pkl
 ```
+
+#### **Audio Not Playing**
+- Ensure internet connection for Spotify previews
+- Check browser audio permissions
+- Verify preview URLs in dataset
 
 #### **Memory Issues**
-- Reduce dataset size for testing
 - Increase Docker memory allocation
-- Use streaming data processing
+- Use smaller dataset for testing
+- Check system resources
 
-#### **Slow Performance**
-- Enable Streamlit caching
-- Optimize data loading
-- Use smaller model embeddings
-
-### Debug Mode
+#### **Port Conflicts**
 ```bash
-# Run with debugging
-streamlit run app.py --logger.level=debug
-
-# Check Streamlit logs
-tail -f ~/.streamlit/logs/streamlit.log
+# Use different port if 8501 is occupied
+streamlit run app.py --server.port 8502
 ```
 
-## 📦 Dependencies
+### Docker Issues
 
-### Core Dependencies (requirements.txt)
-```txt
-streamlit>=1.40.0          # Web application framework
-pandas>=2.2.0             # Data manipulation
-numpy>=2.1.0              # Numerical computing
-scikit-learn>=1.6.0       # Machine learning
-hdbscan>=0.8.33           # Clustering algorithm
-umap-learn>=0.5.4         # Dimensionality reduction
-plotly>=6.0.0             # Interactive visualizations
-joblib>=1.4.0             # Model serialization
-requests>=2.31.0          # HTTP requests
-```
-
-### Optional Dependencies
+#### **Container Won't Start**
 ```bash
-# Development tools
-pip install black flake8 pytest streamlit-profiler
+# Check logs
+docker-compose logs spotify-app
 
-# Additional visualization
-pip install seaborn matplotlib altair
-
-# Performance monitoring
-pip install memory-profiler psutil
+# Rebuild container
+docker-compose build --no-cache
 ```
 
-## 🔄 Updates & Maintenance
-
-### Regular Updates
-1. **Dependency Updates**: Monthly security and feature updates
-2. **Model Retraining**: Quarterly with new data
-3. **Performance Monitoring**: Weekly performance reviews
-4. **User Feedback**: Continuous UI/UX improvements
-
-### Version Control
+#### **Data Volume Issues**
 ```bash
-# Tag releases
-git tag -a v1.0.0 -m "Audio preview release"
+# Check volume mounts
+docker-compose config
 
-# Track dependencies
-pip freeze > requirements.txt
-
-# Document changes
-# See CHANGELOG.md for version history
+# Fix permissions
+sudo chown -R $USER:$USER ../data/
 ```
 
-## 📄 License & Credits
+## 🧪 Development
 
-This application is part of the **Spotify Music Recommendation System** project.
+### Adding New Features
 
-### Acknowledgments
-- **Spotify Web API** for audio preview capabilities
-- **Streamlit** team for the excellent framework
-- **scikit-learn** community for ML tools
-- **Plotly** for interactive visualizations
+#### **New Component**
+```python
+# Create in components/
+class MyNewComponent:
+    def __init__(self):
+        pass
+    
+    def render(self):
+        st.write("New component")
+```
 
-### Data Attribution
-- Spotify dataset used under academic/research license
-- Audio previews © Spotify AB
-- Artist and track metadata from Spotify
+#### **New Utility Function**
+```python
+# Add to utils/
+def my_utility_function():
+    return "utility result"
+```
 
----
+#### **Updating Styles**
+```css
+/* Add to static/css/styles.css */
+.my-new-style {
+    background: #1DB954;
+    border-radius: 8px;
+}
+```
 
-**For more information, see the [main project README](../README.md) and [setup guide](../SETUP.md).** 
+### Testing
+
+```bash
+# Run basic functionality test
+streamlit run app.py --logger.level debug
+
+# Test Docker build
+docker build -t test-app .
+docker run -p 8501:8501 test-app
+```
+
+## 📞 Support
+
+### Resources
+- **Streamlit Documentation**: https://docs.streamlit.io/
+- **Docker Documentation**: https://docs.docker.com/
+- **Spotify Web API**: https://developer.spotify.com/documentation/web-api/
+
+### Common Solutions
+1. **Memory errors**: Increase available RAM or use dataset sampling
+2. **Model loading fails**: Verify model file integrity and paths
+3. **Audio issues**: Check network connectivity and browser permissions
+4. **Slow performance**: Enable caching and optimize data loading
+
+For additional support, check the application logs and Docker container status. 

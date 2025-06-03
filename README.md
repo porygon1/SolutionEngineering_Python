@@ -3,18 +3,20 @@
 [![Docker](https://img.shields.io/badge/Docker-Enabled-blue?logo=docker)](https://www.docker.com/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Latest-red?logo=streamlit)](https://streamlit.io/)
 [![Python](https://img.shields.io/badge/Python-3.11+-green?logo=python)](https://www.python.org/)
+[![Spotify API](https://img.shields.io/badge/Spotify-API_Integrated-1DB954?logo=spotify)](https://developer.spotify.com/documentation/web-api)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-An intelligent music recommendation system powered by **HDBSCAN clustering** and **K-Nearest Neighbors**, featuring **audio preview capabilities** for direct song comparison. Built with Python, Streamlit, and deployed with Docker.
+An intelligent music recommendation system powered by **HDBSCAN clustering** and **K-Nearest Neighbors**, featuring **audio preview capabilities** and **enhanced Spotify Web API integration** for rich music discovery. Built with Python, Streamlit, and deployed with Docker.
 
 ## 🎯 Project Overview
 
 This system analyzes Spotify track data using advanced machine learning techniques to provide highly accurate music recommendations. Users can:
 
-- **🔍 Search & Discover**: Find songs by name or artist
+- **🔍 Search & Discover**: Find songs by name or artist with fuzzy search
 - **🎧 Listen & Compare**: Play 30-second Spotify previews directly in the app
 - **🎯 Smart Recommendations**: Get suggestions based on audio similarity within clusters or globally
 - **📊 Visual Analysis**: Explore similarity scores and audio features interactively
+- **🎵 Enhanced Spotify Data**: Access detailed audio analysis, artist info, album data, and related content
 
 ## ✨ Key Features
 
@@ -22,6 +24,13 @@ This system analyzes Spotify track data using advanced machine learning techniqu
 - **Direct Audio Playback**: 30-second Spotify previews for immediate comparison
 - **Side-by-Side Comparison**: Listen to selected song and recommendations simultaneously
 - **Audio Statistics**: Coverage metrics and availability tracking
+
+### 🚀 Enhanced Spotify Integration *(NEW)*
+- **🔊 Detailed Audio Analysis**: Confidence scores, song sections, audio segments
+- **🎤 Rich Artist Information**: Images, follower counts, genres, top tracks
+- **💿 Album Metadata**: Cover art, release dates, labels, popularity scores
+- **🔗 Related Content**: Similar artists, genre exploration, direct Spotify links
+- **📊 Visual Enhancement**: Artist photos, album covers, interactive content
 
 ### 🤖 Advanced ML Pipeline
 - **HDBSCAN Clustering**: Groups songs by audio similarity patterns
@@ -32,6 +41,7 @@ This system analyzes Spotify track data using advanced machine learning techniqu
 - **Real-time Search**: Dynamic song search with artist name resolution
 - **Visual Similarity**: Interactive charts showing recommendation scores
 - **Responsive Design**: Modern UI with audio controls and expandable sections
+- **Native Streamlit Components**: Clean, professional interface with dismissible notifications
 
 ## 📁 Project Structure
 
@@ -39,6 +49,7 @@ This system analyzes Spotify track data using advanced machine learning techniqu
 📦 Spotify-Music-Recommendation-System/
 ├── 🎵 streamlit_app/                 # Main Streamlit application
 │   ├── app.py                        # Main application with audio features
+│   ├── spotify_api_client.py         # Spotify Web API integration (NEW)
 │   ├── Dockerfile                    # Container configuration
 │   ├── requirements.txt              # Python dependencies
 │   └── README.md                     # App-specific documentation
@@ -49,7 +60,7 @@ This system analyzes Spotify track data using advanced machine learning techniqu
 │   └── exploration_analysis/         # Exploratory data analysis
 ├── 📂 data/                          # Data storage
 │   ├── raw/                          # Original Spotify datasets
-│   │   ├── spotify_tracks.csv        # Main track data with preview URLs
+│   │   ├── spotify_tracks.csv        # Main track data with API URLs
 │   │   ├── spotify_artists.csv       # Artist information
 │   │   ├── spotify_albums.csv        # Album metadata
 │   │   ├── low_level_audio_features.csv  # Spectral and audio features
@@ -67,6 +78,7 @@ This system analyzes Spotify track data using advanced machine learning techniqu
 └── 📚 Documentation
     ├── README.md                     # This file
     ├── SETUP.md                      # Development setup guide
+    ├── SPOTIFY_SETUP.md              # Spotify API setup guide (NEW)
     └── .gitignore                    # Git ignore patterns
 ```
 
@@ -78,11 +90,16 @@ This system analyzes Spotify track data using advanced machine learning techniqu
 - Docker and Docker Compose
 - Spotify dataset files in `data/raw/`
 - Trained models in `data/models/`
+- *(Optional)* Spotify API credentials for enhanced features
 
 ```bash
 # Clone the repository
 git clone <your-repo-url>
 cd spotify-music-recommendation-system
+
+# Configure Spotify API (optional for enhanced features)
+cp .env.template .env
+# Edit .env with your Spotify credentials
 
 # Start the application
 docker-compose up -d
@@ -96,6 +113,7 @@ open http://localhost:8501
 **Prerequisites:**
 - Python 3.11+
 - pip package manager
+- *(Optional)* Spotify API credentials
 
 ```bash
 # Clone and setup
@@ -110,9 +128,36 @@ source venv/bin/activate  # or .\venv\Scripts\activate on Windows
 cd streamlit_app
 pip install -r requirements.txt
 
+# Configure Spotify API (optional)
+# See SPOTIFY_SETUP.md for detailed instructions
+
 # Run the application
 streamlit run app.py
 ```
+
+### 🎵 Enable Enhanced Spotify Features
+
+**⚠️ Important Update (Nov 27, 2024)**: Spotify has deprecated several key API endpoints for new applications.
+
+**Available Enhanced Features:**
+- ✅ **Artist Information**: Profile images, follower counts, genres
+- ✅ **Album Details**: Cover artwork, release dates, metadata  
+- ✅ **Artist Discography**: Recent albums and singles
+- ✅ **External Links**: Direct links to Spotify for playback
+
+**No Longer Available:**
+- ❌ **Audio Analysis**: Deep audio feature analysis (deprecated)
+- ❌ **Related Artists**: Automatic similar artist discovery (deprecated)
+- ❌ **Spotify Recommendations**: API-based recommendations (deprecated)
+
+**To enable available features:**
+
+1. **Follow the [Spotify Setup Guide](SPOTIFY_SETUP.md)**
+2. **Create a Spotify App** at [developer.spotify.com](https://developer.spotify.com/dashboard/applications)
+3. **Configure your credentials** in `.env` or Streamlit secrets
+4. **Enable enhanced features** in the app sidebar
+
+*The app works perfectly without Spotify API credentials. The core recommendation system uses our advanced HDBSCAN clustering and is unaffected by these API changes.*
 
 ## 🎯 How It Works
 
