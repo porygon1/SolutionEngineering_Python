@@ -1,6 +1,6 @@
-# 🛠️ Development Setup Guide
+# 🛠️ Development Setup Guide - Spotify Music Recommendation
 
-This guide provides detailed instructions for setting up the Spotify Music Recommendation System development environment.
+This guide provides detailed instructions for setting up the **Spotify Music Recommendation** development environment.
 
 ## 📋 Prerequisites
 
@@ -13,14 +13,14 @@ This guide provides detailed instructions for setting up the Spotify Music Recom
 ### System Requirements
 - **RAM**: Minimum 8GB (16GB recommended for model training)
 - **Storage**: At least 5GB free space for datasets and models
-- **Network**: Internet connection for downloading dependencies and audio previews
+- **Network**: Internet connection for downloading dependencies and Spotify API features
 
 ## 🚀 Quick Setup (Docker - Recommended)
 
 ### 1. Clone Repository
 ```bash
 git clone <your-repo-url>
-cd spotify-music-recommendation-system
+cd spotify-music-recommendation
 ```
 
 ### 2. Prepare Data
@@ -28,11 +28,8 @@ cd spotify-music-recommendation-system
 # Ensure your data structure looks like this:
 data/
 ├── raw/
-│   ├── spotify_tracks.csv          # Main track data with preview URLs
-│   ├── spotify_artists.csv         # Artist information
-│   ├── spotify_albums.csv          # Album metadata
-│   ├── low_level_audio_features.csv # Spectral features
-│   └── lyrics_features.csv         # Lyrical features
+│   ├── spotify_tracks.csv          # Main track data
+│   └── spotify_artists.csv         # Artist information
 └── models/                         # Created after model training
     ├── hdbscan_model.pkl
     ├── knn_model.pkl
@@ -57,7 +54,7 @@ jupyter notebook scripts/Models/HDBSCAN_Clusters_KNN.ipynb
 # Build and start the application
 docker-compose up -d
 
-# Access the application
+# Access the Spotify Music Recommendation system
 open http://localhost:8501
 ```
 
@@ -68,7 +65,7 @@ open http://localhost:8501
 #### Windows
 ```powershell
 # Navigate to project directory
-cd path\to\spotify-music-recommendation-system
+cd path\to\spotify-music-recommendation
 
 # Create virtual environment
 python -m venv venv
@@ -83,7 +80,7 @@ python --version
 #### Linux/macOS
 ```bash
 # Navigate to project directory
-cd path/to/spotify-music-recommendation-system
+cd path/to/spotify-music-recommendation
 
 # Create virtual environment
 python3 -m venv venv
@@ -97,7 +94,7 @@ python --version
 
 ### Step 2: Install Dependencies
 
-#### For Streamlit App Development
+#### For Spotify Music Recommendation Development
 ```bash
 cd streamlit_app
 pip install -r requirements.txt
@@ -109,16 +106,26 @@ cd scripts/Models
 pip install -r requirements.txt
 ```
 
-#### For Full Development (All Components)
+### Step 3: Configure Environment Variables
 ```bash
-# Install all dependencies at once
-pip install streamlit>=1.40.0 pandas>=2.2.0 numpy>=2.1.0 \
-    scikit-learn>=1.6.0 hdbscan>=0.8.33 umap-learn>=0.5.4 \
-    plotly>=6.0.0 joblib>=1.4.0 requests>=2.31.0 \
-    jupyter notebook ipywidgets
+# Set data path for local development
+export DATA_PATH="data"
+
+# Optional: Configure Spotify API credentials
+export SPOTIFY_CLIENT_ID="your_client_id"
+export SPOTIFY_CLIENT_SECRET="your_client_secret"
 ```
 
-### Step 3: Verify Installation
+### Step 4: Run the Application
+```bash
+# Navigate to streamlit app directory
+cd streamlit_app
+
+# Run the Spotify Music Recommendation system
+streamlit run app.py
+```
+
+### Step 5: Verify Installation
 ```bash
 # Check Python version
 python --version
@@ -135,11 +142,8 @@ python -c "import streamlit, pandas, sklearn, hdbscan; print('All imports succes
 ### Required Datasets
 Your `data/raw/` directory should contain these CSV files:
 
-1. **spotify_tracks.csv** - Main dataset with audio features and preview URLs
-2. **spotify_artists.csv** - Artist names and metadata
-3. **spotify_albums.csv** - Album information
-4. **low_level_audio_features.csv** - Spectral analysis features (MFCCs, chroma, etc.)
-5. **lyrics_features.csv** - Text-based lyrical features
+1. **spotify_tracks.csv** - Main dataset with audio features and track metadata
+2. **spotify_artists.csv** - Artist names and metadata  
 
 ### Data Validation
 ```bash
@@ -151,10 +155,7 @@ import os
 data_dir = 'data/raw'
 required_files = [
     'spotify_tracks.csv',
-    'spotify_artists.csv', 
-    'spotify_albums.csv',
-    'low_level_audio_features.csv',
-    'lyrics_features.csv'
+    'spotify_artists.csv'
 ]
 
 for file in required_files:
@@ -183,195 +184,190 @@ jupyter notebook scripts/Models/HDBSCAN_Clusters_KNN.ipynb
 ### 2. Training Process
 The notebook will guide you through:
 1. **Data Loading**: Import and validate all datasets
-2. **Feature Engineering**: Process audio and spectral features
+2. **Feature Engineering**: Process audio features
 3. **HDBSCAN Clustering**: Train clustering model
 4. **KNN Model**: Build recommendation system
 5. **Model Export**: Save models to `data/models/`
 
 ### 3. Expected Output Files
-After training, you should have:
-```
-data/models/
-├── hdbscan_model.pkl         # Trained clustering model
-├── knn_model.pkl            # K-NN recommendation model  
-├── audio_embeddings.pkl     # Processed feature embeddings
-├── cluster_labels.pkl       # Cluster assignments for each song
-└── song_indices.pkl         # Index mapping for songs
-```
+After training, you should have these files in `data/models/`:
+- `hdbscan_model.pkl` - Trained HDBSCAN clustering model
+- `knn_model.pkl` - K-Nearest Neighbors model for recommendations
+- `audio_embeddings.pkl` - Audio feature embeddings
+- `cluster_labels.pkl` - Cluster assignments for each track
+- `song_indices.pkl` - Song index mapping
 
-## 🧪 Running the Application
+## 🎵 Spotify API Configuration (Optional)
 
-### Local Development
+### 1. Create Spotify App
+1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)
+2. Click "Create App"
+3. Fill in app details
+4. Note your Client ID and Client Secret
+
+### 2. Configure Credentials
+Choose one of these methods:
+
+#### Method 1: Environment Variables
 ```bash
-# Navigate to streamlit app directory
-cd streamlit_app
-
-# Run Streamlit application
-streamlit run app.py
-
-# Application will open at http://localhost:8501
+export SPOTIFY_CLIENT_ID="your_client_id_here"
+export SPOTIFY_CLIENT_SECRET="your_client_secret_here"
 ```
 
-### Docker Development
-```bash
-# Build and run with live reload for development
-docker-compose -f docker-compose.yml up --build
+#### Method 2: Streamlit Secrets
+Create `.streamlit/secrets.toml`:
+```toml
+[spotify]
+client_id = "your_client_id_here"
+client_secret = "your_client_secret_here"
+```
 
-# For production deployment
+#### Method 3: Environment File
+Create `.env` file:
+```env
+SPOTIFY_CLIENT_ID=your_client_id_here
+SPOTIFY_CLIENT_SECRET=your_client_secret_here
+```
+
+### 3. Verify API Connection
+```bash
+# Test Spotify API connection
+python -c "
+try:
+    from streamlit_app.spotify_api_client import create_spotify_client
+    client = create_spotify_client()
+    if client:
+        print('✅ Spotify API connection successful')
+    else:
+        print('❌ Spotify API connection failed')
+except Exception as e:
+    print(f'❌ Error: {e}')
+"
+```
+
+## 🐳 Docker Development
+
+### Build and Run with Docker
+```bash
+# Build the container
+docker-compose build
+
+# Start the application
 docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop the application
+docker-compose down
 ```
 
-## 🔧 Development Tools
-
-### Code Quality
+### Development with Docker
 ```bash
-# Install development tools
-pip install black flake8 pytest
-
-# Format code
-black streamlit_app/app.py
-
-# Check code style
-flake8 streamlit_app/app.py
-
-# Run tests (if available)
-pytest streamlit_app/tests/
-```
-
-### Debugging
-```bash
-# Run Streamlit in debug mode
-streamlit run app.py --logger.level=debug
-
-# Check Docker logs
-docker-compose logs streamlit
-
-# Access running container
-docker-compose exec streamlit bash
-```
-
-## 📱 Environment Variables
-
-Create a `.env` file in the project root for customization:
-```bash
-# .env file
-STREAMLIT_SERVER_PORT=8501
-STREAMLIT_SERVER_ENABLECORS=false
-STREAMLIT_SERVER_ENABLEXSRFPROTECTION=false
-
-# Data paths (if different from defaults)
-DATA_PATH=/app/data
-RAW_DATA_PATH=/app/data/raw
-MODELS_PATH=/app/data/models
-```
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-#### 1. **Import Errors**
-```bash
-# Solution: Reinstall dependencies
-pip install --force-reinstall -r requirements.txt
-```
-
-#### 2. **Model Loading Errors**
-```bash
-# Check if models exist
-ls -la data/models/
-
-# Retrain models if missing
-jupyter notebook scripts/Models/HDBSCAN_Clusters_KNN.ipynb
-```
-
-#### 3. **Audio Preview Issues**
-- Ensure `preview_url` column exists in spotify_tracks.csv
-- Check internet connection for Spotify previews
-- Verify URLs are valid Spotify preview links
-
-#### 4. **Docker Issues**
-```bash
-# Rebuild containers
+# Rebuild after code changes
 docker-compose down
 docker-compose build --no-cache
 docker-compose up -d
-
-# Check container logs
-docker-compose logs
 ```
 
-#### 5. **Memory Issues**
-- Increase Docker memory allocation (8GB+)
-- Use smaller dataset for testing
-- Enable swap space on Linux systems
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### 1. Missing Data Files
+```bash
+# Check if data files exist
+ls -la data/raw/
+ls -la data/models/
+```
+
+#### 2. Import Errors
+```bash
+# Reinstall dependencies
+pip install -r streamlit_app/requirements.txt --force-reinstall
+```
+
+#### 3. Port Already in Use
+```bash
+# Find process using port 8501
+lsof -i :8501  # Linux/macOS
+netstat -ano | findstr :8501  # Windows
+
+# Kill the process or use different port
+streamlit run app.py --server.port 8502
+```
+
+#### 4. Docker Issues
+```bash
+# Clean Docker system
+docker system prune -f
+
+# Rebuild without cache
+docker-compose build --no-cache
+```
 
 ### Performance Optimization
+
+#### Memory Usage
 ```bash
-# For large datasets, consider:
-# 1. Increase available memory
-# 2. Use SSD storage for data
-# 3. Enable multiprocessing in model training
-# 4. Use GPU for UMAP if available
+# Monitor memory usage
+docker stats
+
+# Limit container memory
+docker-compose up -d --memory=4g
 ```
 
-## 🔄 Updates and Maintenance
-
-### Updating Dependencies
+#### Faster Startup
 ```bash
-# Check for updates
-pip list --outdated
+# Use cached models
+export CACHE_MODELS=true
 
-# Update specific package
-pip install --upgrade streamlit
-
-# Update all packages (use with caution)
-pip install --upgrade -r requirements.txt
+# Disable Spotify API for testing
+export DISABLE_SPOTIFY_API=true
 ```
 
-### Data Updates
-1. Replace CSV files in `data/raw/`
-2. Retrain models using the notebook
-3. Restart the application
+## 📝 Development Workflow
 
-### Model Retraining
+### 1. Code Changes
 ```bash
-# Schedule regular retraining for production
-# Run monthly or when new data is available
-jupyter nbconvert --execute scripts/Models/HDBSCAN_Clusters_KNN.ipynb
+# Make your changes
+git add .
+git commit -m "feat: description of changes"
 ```
 
-## 📞 Getting Help
+### 2. Testing
+```bash
+# Test locally
+cd streamlit_app
+streamlit run app.py
 
-### Documentation
-- **Main README**: [README.md](README.md)
-- **Docker Setup**: [DOCKER_SETUP.md](DOCKER_SETUP.md)
-- **App Documentation**: [streamlit_app/README.md](streamlit_app/README.md)
+# Test with Docker
+docker-compose up -d
+```
 
-### Support Channels
-- **GitHub Issues**: Report bugs and feature requests
-- **Model Training**: Check Jupyter notebook comments
-- **Docker Issues**: Review Docker logs and DOCKER_SETUP.md
+### 3. Deployment
+```bash
+# Push changes
+git push origin main
 
-## ✅ Verification Checklist
+# Deploy to production
+docker-compose -f docker-compose.prod.yml up -d
+```
 
-- [ ] Python 3.11+ installed
-- [ ] Virtual environment created and activated
-- [ ] All dependencies installed successfully
-- [ ] Data files present in `data/raw/`
-- [ ] Models trained and exported to `data/models/`
-- [ ] Streamlit app runs without errors
-- [ ] Audio previews working in browser
-- [ ] Docker setup functional (if using containerized deployment)
+## 📚 Next Steps
 
-## 🎯 Next Steps
+1. **Explore the Application**: Start with the basic setup and explore all features
+2. **Train Models**: Follow the model training notebook for custom datasets
+3. **Customize UI**: Modify the Streamlit components for your specific needs
+4. **Add Features**: Extend functionality with new recommendation algorithms
+5. **Deploy**: Use Docker for production deployment
 
-After successful setup:
-1. **Explore the App**: Try different songs and recommendation modes
-2. **Model Experimentation**: Modify clustering parameters in the notebook
-3. **Feature Engineering**: Add new audio features or data sources
-4. **UI Improvements**: Enhance the Streamlit interface
-5. **Deployment**: Deploy to cloud platforms for production use
+## 🆘 Getting Help
+
+- **Documentation**: Check other `.md` files in the repository
+- **Issues**: Create an issue on GitHub for bugs or feature requests
+- **Discussions**: Use GitHub Discussions for questions and ideas
 
 ---
 
-**Happy coding! 🎵🚀**
+**🎵 Happy coding! Enjoy building with the Spotify Music Recommendation system.**

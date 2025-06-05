@@ -1,6 +1,6 @@
-# 🤝 Contributing to Spotify Music Recommendation System
+# 🤝 Contributing to Spotify Music Recommendation
 
-Thank you for your interest in contributing to the Spotify Music Recommendation System! This guide will help you get started with contributing to the project.
+Thank you for your interest in contributing to the Spotify Music Recommendation project! This guide will help you get started with contributing to the project.
 
 ## 📋 Table of Contents
 
@@ -40,8 +40,8 @@ Before contributing, ensure you have:
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/spotify-music-recommendation-system.git
-   cd spotify-music-recommendation-system
+   git clone https://github.com/YOUR_USERNAME/spotify-music-recommendation.git
+   cd spotify-music-recommendation
    ```
 
 3. **Set up the development environment**:
@@ -126,15 +126,21 @@ We use a **GitHub Flow** approach:
 Understanding the project structure will help you contribute effectively:
 
 ```
-spotify-music-recommendation-system/
+spotify-music-recommendation/
 ├── 🎵 streamlit_app/           # Web application
 │   ├── app.py                  # Main Streamlit app
+│   ├── components/             # UI components
+│   │   ├── sidebar.py          # Navigation sidebar
+│   │   ├── track_grid.py       # Track display grid
+│   │   ├── music_player.py     # Music player
+│   │   └── recommendations.py  # Recommendations display
+│   ├── utils/                  # Utility modules
+│   ├── static/                 # Static assets
 │   ├── requirements.txt        # App dependencies
 │   └── Dockerfile             # Container config
 ├── 📊 scripts/                 # Analysis & modeling
 │   ├── Models/                 # ML model training
-│   │   ├── HDBSCAN_Clusters_KNN.ipynb
-│   │   └── requirements.txt
+│   │   └── HDBSCAN_Clusters_KNN.ipynb
 │   └── exploration_analysis/   # Data exploration
 ├── 📂 data/                    # Data storage
 │   ├── raw/                    # Original datasets
@@ -146,7 +152,8 @@ spotify-music-recommendation-system/
     ├── README.md
     ├── SETUP.md
     ├── CONTRIBUTING.md (this file)
-    └── DOCKER_SETUP.md
+    ├── DOCKER_SETUP.md
+    └── SPOTIFY_SETUP.md
 ```
 
 ## 💻 Coding Standards

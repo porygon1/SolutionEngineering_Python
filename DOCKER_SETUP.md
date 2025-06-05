@@ -1,6 +1,6 @@
-# 🐳 Docker Setup Guide
+# �� Docker Setup Guide - Spotify Music Recommendation
 
-This guide covers containerized deployment of the Spotify Music Recommendation System using Docker and Docker Compose.
+This guide covers containerized deployment of the **Spotify Music Recommendation** system using Docker and Docker Compose.
 
 ## 🚀 Quick Start
 
@@ -15,18 +15,18 @@ This guide covers containerized deployment of the Spotify Music Recommendation S
 ```bash
 # Clone the repository
 git clone <your-repo-url>
-cd spotify-music-recommendation-system
+cd spotify-music-recommendation
 
 # Start the application
 docker-compose up -d
 
-# Access the app
+# Access the Spotify Music Recommendation system
 open http://localhost:8501
 ```
 
 ### 2. Enhanced Deployment with Spotify API
 
-For full features including artist info, album covers, and detailed audio analysis:
+For full features including album artwork, enhanced track information, and rich media:
 
 ```bash
 # Copy environment template
@@ -44,12 +44,24 @@ docker-compose up -d
 
 ### Environment Variables
 
-The application supports the following environment variables:
+The Spotify Music Recommendation system supports the following environment variables:
 
-#### Required for Enhanced Features
+#### Enhanced Features
 ```bash
 SPOTIFY_CLIENT_ID=your_client_id_here
 SPOTIFY_CLIENT_SECRET=your_client_secret_here
+```
+
+#### Application Configuration
+```bash
+# Data path (Docker uses /app/data by default)
+DATA_PATH=/app/data
+
+# Streamlit configuration
+STREAMLIT_SERVER_PORT=8501
+STREAMLIT_SERVER_HEADLESS=true
+STREAMLIT_SERVER_ENABLECORS=false
+STREAMLIT_SERVER_ENABLEXSRFPROTECTION=false
 ```
 
 #### Logging Configuration
