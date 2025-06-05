@@ -355,14 +355,27 @@ class SpotifyAPIClient:
         return success
 
 def create_spotify_client() -> Optional[SpotifyAPIClient]:
-    """Create and configure Spotify API client from environment variables"""
-    logger.info("Creating Spotify API client from environment variables")
+    """Create and configure Spotify API client from environment variables or Streamlit secrets"""
+    logger.info("Creating Spotify API client")
     
+    # Try environment variables first
     client_id = os.getenv('SPOTIFY_CLIENT_ID')
     client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
     
+    # Fallback to Streamlit secrets
     if not client_id or not client_secret:
-        logger.warning("Spotify API credentials not found in environment variables")
+        try:
+            logger.debug("Environment variables not found, trying Streamlit secrets")
+            client_id = st.secrets["spotify"]["spotify_client_id"]
+            client_secret = st.secrets["spotify"]["spotify_client_secret"]
+            logger.debug("Successfully loaded credentials from Streamlit secrets")
+        except Exception as e:
+            logger.debug(f"Could not load from Streamlit secrets: {e}")
+            client_id = None
+            client_secret = None
+    
+    if not client_id or not client_secret:
+        logger.warning("Spotify API credentials not found in environment variables or Streamlit secrets")
         return None
     
     try:
@@ -390,7 +403,7 @@ def display_spotify_api_status(client: SpotifyAPIClient) -> bool:
     
     if client is None:
         st.error("❌ **Spotify API**: Not configured")
-        st.info("💡 Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET environment variables")
+        st.info("💡 Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET environment variables or configure in .streamlit/secrets.toml")
         logger.info("Displayed Spotify API status: not configured")
         return False
     
@@ -447,27 +460,51 @@ def display_enhanced_track_info(client: SpotifyAPIClient, track_data: Dict):
         st.warning("Spotify API client not available")
         return
     
-    # Extract Spotify ID from track data if available
+    # Extract Spotify ID from track data
     spotify_id = None
-    external_urls = track_data.get('external_urls', {})
     
-    if isinstance(external_urls, str):
-        try:
-            external_urls = eval(external_urls) if external_urls.startswith('{') else {}
-        except:
-            external_urls = {}
+    # Method 1: Direct ID field (most reliable for our CSV data)
+    if 'id' in track_data and track_data['id'] and not pd.isna(track_data['id']):
+        spotify_id = str(track_data['id']).strip()
+        logger.debug(f"Found Spotify ID from 'id' field: {spotify_id}")
     
-    if isinstance(external_urls, dict) and 'spotify' in external_urls:
-        spotify_url = external_urls['spotify']
-        if '/track/' in spotify_url:
-            spotify_id = spotify_url.split('/track/')[-1].split('?')[0]
+    # Method 2: Extract from URI if ID not available
+    elif 'uri' in track_data and track_data['uri'] and not pd.isna(track_data['uri']):
+        uri = str(track_data['uri']).strip()
+        if uri.startswith('spotify:track:'):
+            spotify_id = uri.split(':')[-1]
+            logger.debug(f"Extracted Spotify ID from URI: {spotify_id}")
+    
+    # Method 3: Extract from track_href as fallback
+    elif 'track_href' in track_data and track_data['track_href'] and not pd.isna(track_data['track_href']):
+        track_href = str(track_data['track_href']).strip()
+        if '/tracks/' in track_href:
+            spotify_id = track_href.split('/tracks/')[-1]
+            logger.debug(f"Extracted Spotify ID from track_href: {spotify_id}")
+    
+    # Method 4: Legacy external_urls method (for backward compatibility)
+    else:
+        external_urls = track_data.get('external_urls', {})
+        
+        if isinstance(external_urls, str):
+            try:
+                external_urls = eval(external_urls) if external_urls.startswith('{') else {}
+            except:
+                external_urls = {}
+        
+        if isinstance(external_urls, dict) and 'spotify' in external_urls:
+            spotify_url = external_urls['spotify']
+            if '/track/' in spotify_url:
+                spotify_id = spotify_url.split('/track/')[-1].split('?')[0]
+                logger.debug(f"Extracted Spotify ID from external_urls: {spotify_id}")
     
     if not spotify_id:
         st.info("💡 No Spotify ID available for enhanced features")
         logger.debug("No Spotify ID found for enhanced features")
+        logger.debug(f"Available track_data keys: {list(track_data.keys())}")
         return
     
-    logger.debug(f"Using Spotify ID: {spotify_id}")
+    logger.info(f"Using Spotify ID: {spotify_id}")
     
     try:
         start_time = time.time()

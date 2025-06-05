@@ -13,18 +13,22 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the Streamlit app and all supporting modules
+# Copy the main Streamlit app (new version)
 COPY app.py .
+
+# Copy supporting modules
 COPY spotify_api_client.py .
 COPY logging_config.py .
 
 # Copy modular components
 COPY utils/ ./utils/
 COPY components/ ./components/
-COPY static/ ./static/
 
-# Copy Streamlit configuration if it exists (this might not exist)
+# Copy Streamlit configuration
 COPY .streamlit/ ./.streamlit/
+
+# Copy static files (CSS, images, etc.)
+COPY static/ ./static/
 
 # Create directory structure for data and models
 RUN mkdir -p /app/data/raw /app/data/models /app/logs
@@ -37,6 +41,7 @@ ENV PYTHONUNBUFFERED=1
 ENV STREAMLIT_SERVER_PORT=8501
 ENV STREAMLIT_SERVER_HEADLESS=true
 ENV PYTHONPATH=/app
+ENV DATA_PATH=/app/data
 
 # Set default Spotify API environment variables (can be overridden)
 ENV SPOTIFY_API_BASE_URL=https://api.spotify.com/v1
@@ -49,5 +54,5 @@ ENV ENABLE_SPOTIFY_API=true
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8501/_stcore/health || exit 1
 
-# Command to run the app
+# Command to run the new app version
 ENTRYPOINT ["streamlit", "run", "app.py", "--server.enableCORS=false", "--server.enableXsrfProtection=false"] 

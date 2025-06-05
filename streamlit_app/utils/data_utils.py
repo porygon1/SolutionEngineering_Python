@@ -293,8 +293,10 @@ def check_audio_url(url: str) -> bool:
         return False
     
     try:
-        # Just check if it's a valid URL format
-        is_valid = url.startswith('http') and 'spotify' in url
+        url_str = str(url)
+        # Check if it's a valid HTTP URL format and from Spotify domains
+        is_valid = (url_str.startswith('http') and 
+                   ('spotify' in url_str or 'scdn.co' in url_str))
         return is_valid
     except Exception:
         return False 

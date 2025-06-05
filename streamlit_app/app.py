@@ -1,123 +1,65 @@
 """
-Spotify Music Recommendation System - Refactored Main Application
-
-A modern, modular implementation of the music recommendation system using
-HDBSCAN clustering and KNN-based song discovery.
+🎵 Spotify Music Recommendation - Modern Music Discovery System
+AI-powered music recommendation system with Spotify Web API integration
 """
 
 import streamlit as st
 import pandas as pd
 import numpy as np
-import os
 import time
-from datetime import datetime
+import os
 from pathlib import Path
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+import logging
 
-# Import modular components
+# Import utilities
 from utils import (
-    initialize_app_styles,
-    load_data, load_all_models, create_artist_mapping, get_artist_name
+    load_data, load_all_models, create_artist_mapping, get_artist_name,
+    format_duration, get_key_name, get_mode_name, initialize_app_styles
 )
 from utils.recommendations import get_recommendations_within_cluster, get_global_recommendations
-from components import (
-    create_searchable_song_index, create_song_search_interface, create_advanced_search_interface,
-    create_spotify_track_card, display_simple_card, display_recommendations_with_cards,
-    display_audio_player, show_success_message, show_info_message, show_warning_message,
-    create_sidebar_controls, create_app_footer, display_audio_preview_analysis, search_song_by_name
-)
 
-# Set page configuration
+# Set page config for wide layout
 st.set_page_config(
-    page_title="🎵 Spotify Music Recommendation System",
+    page_title="🎵 Spotify Music Recommendation",
     page_icon="🎧",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Initialize logging
-try:
-    from logging_config import (
-        setup_logging, get_logger, log_user_action, log_performance, 
-        log_recommendation_generation
-    )
-    logger = setup_logging()
-    ADVANCED_LOGGING = True
-    logger.info("Advanced logging system initialized")
-except ImportError:
-    import logging
-    import sys
-    from pathlib import Path
-    
-    # Fallback to basic logging
-    def setup_basic_logging():
-        log_dir = Path("logs")
-        log_dir.mkdir(exist_ok=True)
-        
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s',
-            handlers=[
-                logging.StreamHandler(sys.stdout),
-                logging.FileHandler(log_dir / f"app_{datetime.now().strftime('%Y%m%d')}.log")
-            ]
-        )
-        return logging.getLogger(__name__)
-    
-    logger = setup_basic_logging()
-    ADVANCED_LOGGING = False
-    
-    # Fallback functions
-    def log_user_action(action, details=None):
-        logger.info(f"User action: {action} - {details}")
-    def log_performance(operation, duration, details=None):
-        logger.info(f"Performance: {operation} - {duration:.3f}s - {details}")
-    def log_recommendation_generation(method, song_idx, num_recommendations, processing_time, details=None):
-        logger.info(f"Recommendations: {method} - song {song_idx} - {num_recommendations} recs - {processing_time:.3f}s")
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-logger.info("Streamlit app started - page configuration set")
-
-# Initialize custom styles
+# Initialize custom styles from external CSS file
 initialize_app_styles()
 
-# Initialize Spotify API client
-SPOTIFY_API_AVAILABLE = False
-spotify_client = None
-try:
-    from spotify_api_client import create_spotify_client, display_enhanced_track_info
-    SPOTIFY_API_AVAILABLE = True
-    logger.info("Spotify API client available")
-    
-    spotify_client = create_spotify_client()
-    if spotify_client:
-        logger.info("Spotify API client initialized successfully")
-        log_user_action("spotify_client_initialized", {"success": True})
-    else:
-        logger.warning("Spotify API client initialization returned None")
-except ImportError as e:
-    logger.warning(f"Spotify API client not available: {e}")
-    st.warning("Spotify API client not available. Enhanced features disabled.")
-
-
-class SpotifyRecommendationApp:
-    """Main application class for the Spotify Music Recommendation System."""
+class SpotifyLikeApp:
+    """Spotify-inspired Music Discovery Application"""
     
     def __init__(self):
-        """Initialize the application with configuration and paths."""
         self.setup_paths()
         self.initialize_session_state()
+        self.setup_spotify_client()
+        self.load_data()
     
     def setup_paths(self):
-        """Setup data and model paths."""
-        self.DATA_PATH = "/app/data"
+        """Setup data and model paths for Docker compatibility"""
+        base_path = os.getenv('DATA_PATH', '/app/data')
+        if not os.path.exists(base_path):
+            base_path = os.getenv('DATA_PATH', 'data')
+        
+        self.DATA_PATH = base_path
         self.RAW_DATA_PATH = os.path.join(self.DATA_PATH, "raw")
         self.MODELS_PATH = os.path.join(self.DATA_PATH, "models")
         
-        # File paths
         self.TRACKS_CSV = os.path.join(self.RAW_DATA_PATH, "spotify_tracks.csv")
         self.ARTISTS_CSV = os.path.join(self.RAW_DATA_PATH, "spotify_artists.csv")
-        self.AUDIO_CSV = os.path.join(self.RAW_DATA_PATH, "low_level_audio_features.csv")
         
-        # Model paths
         self.MODEL_PATHS = {
             "hdbscan": os.path.join(self.MODELS_PATH, "hdbscan_model.pkl"),
             "knn": os.path.join(self.MODELS_PATH, "knn_model.pkl"),
@@ -126,310 +68,280 @@ class SpotifyRecommendationApp:
             "song_indices": os.path.join(self.MODELS_PATH, "song_indices.pkl")
         }
         
-        logger.info(f"Data paths configured - DATA_PATH: {self.DATA_PATH}")
-        logger.debug(f"Model paths: {self.MODEL_PATHS}")
+        logger.info(f"Data paths configured - BASE: {base_path}")
+    
+    def setup_spotify_client(self):
+        """Setup Spotify API client if available"""
+        self.spotify_client = None
+        self.spotify_available = False
+        
+        try:
+            from spotify_api_client import create_spotify_client
+            self.spotify_client = create_spotify_client()
+            if self.spotify_client:
+                self.spotify_available = True
+                logger.info("Spotify API client initialized successfully")
+            else:
+                logger.warning("Spotify API client initialization returned None")
+        except ImportError as e:
+            logger.info(f"Spotify API client not available: {e}")
+        except Exception as e:
+            logger.warning(f"Error initializing Spotify client: {e}")
     
     def initialize_session_state(self):
-        """Initialize session state variables."""
-        if 'notifications_dismissed' not in st.session_state:
-            st.session_state['notifications_dismissed'] = {}
+        """Initialize session state for the app"""
+        if 'current_track' not in st.session_state:
+            st.session_state.current_track = None
+        if 'featured_tracks' not in st.session_state:
+            st.session_state.featured_tracks = []
+        if 'recommendations' not in st.session_state:
+            st.session_state.recommendations = []
+        if 'search_results' not in st.session_state:
+            st.session_state.search_results = []
+        if 'selected_track_idx' not in st.session_state:
+            st.session_state.selected_track_idx = None
+        if 'num_recommendations' not in st.session_state:
+            st.session_state.num_recommendations = 12
+        if 'recommendation_type' not in st.session_state:
+            st.session_state.recommendation_type = "cluster"
     
-    def load_application_data(self):
-        """Load all required data for the application."""
-        logger.info("Loading application data")
-        data_load_start = time.time()
-        
-        # Load tracks data
-        with st.spinner("Loading track data..."):
-            tracks_df = load_data(self.TRACKS_CSV)
+    def load_data(self):
+        """Load music data and models"""
+        try:
+            self.tracks_df = load_data(self.TRACKS_CSV)
+            self.artists_df = load_data(self.ARTISTS_CSV)
+            self.artist_mapping = create_artist_mapping(self.artists_df)
+            self.models = load_all_models(self.MODEL_PATHS)
             
-        if tracks_df.empty:
-            logger.error("Cannot load track data - tracks_df is empty")
-            st.error("Cannot load track data. Please ensure the data files are available.")
-            return None, None, None, None
-        
-        # Load artists data
-        with st.spinner("Loading artist data..."):
-            artists_df = load_data(self.ARTISTS_CSV)
-            artist_mapping = create_artist_mapping(artists_df)
+            # Initialize featured tracks
+            if not st.session_state.featured_tracks:
+                self.generate_featured_tracks()
+                
+            logger.info(f"Data loaded - Tracks: {len(self.tracks_df)}, Artists: {len(self.artist_mapping)}")
             
-        if not artist_mapping:
-            logger.warning("Could not load artist mapping")
-            st.warning("Could not load artist mapping. Artist names may not display correctly.")
+        except Exception as e:
+            st.error(f"❌ Error loading data: {e}")
+            logger.error(f"Data loading error: {e}")
+            self.tracks_df = pd.DataFrame()
+            self.artists_df = pd.DataFrame()
+            self.artist_mapping = {}
+            self.models = {}
+    
+    def generate_featured_tracks(self):
+        """Generate a selection of featured tracks"""
+        if not self.tracks_df.empty:
+            # Select diverse featured tracks
+            popular_tracks = self.tracks_df.nlargest(20, 'popularity')
+            danceable_tracks = self.tracks_df.nlargest(10, 'danceability')
+            energetic_tracks = self.tracks_df.nlargest(10, 'energy')
+            
+            # Combine and shuffle
+            featured_indices = list(set(
+                list(popular_tracks.index[:8]) + 
+                list(danceable_tracks.index[:4]) + 
+                list(energetic_tracks.index[:4])
+            ))
+            
+            np.random.shuffle(featured_indices)
+            st.session_state.featured_tracks = featured_indices[:12]
+    
+    def render_sidebar(self):
+        """Render the left sidebar navigation"""
+        from components.sidebar import render_sidebar
+        render_sidebar(self)
+    
+    def render_main_header(self):
+        """Render the main application header"""
+        st.markdown("""
+        <div class="spotify-header">
+            <h1>🎵 Spotify Music Recommendation</h1>
+            <p class="subtitle">Powered by HDBSCAN + K-means clustering with audio feature analysis</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    def render_featured_tracks(self):
+        """Render the featured tracks grid"""
+        from components.track_grid import render_track_grid
+        
+        st.markdown("## 🎵 Featured Tracks")
+        
+        if st.session_state.featured_tracks and not self.tracks_df.empty:
+            featured_tracks_data = self.tracks_df.iloc[st.session_state.featured_tracks]
+            render_track_grid(
+                featured_tracks_data, 
+                self.artist_mapping, 
+                self.spotify_client,
+                grid_id="featured"
+            )
         else:
-            show_success_message(f"Loaded {len(artist_mapping):,} artist mappings", "👥")
-        
-        # Create searchable index
-        with st.spinner("Creating search index..."):
-            search_index = create_searchable_song_index(tracks_df, artist_mapping)
-        
-        show_info_message(f"Search index created with {len(search_index):,} searchable tracks", "🔍")
-        
-        # Load models
-        with st.spinner("Loading recommendation models..."):
-            models = load_all_models(self.MODEL_PATHS)
+            st.info("Loading featured tracks...")
+    
+    def render_recommendations(self):
+        """Render recommendations if a track is selected"""
+        if st.session_state.selected_track_idx is not None:
+            from components.recommendations import render_recommendations_section
             
-        data_load_time = time.time() - data_load_start
-        log_performance("application_data_loading", data_load_time, {
-            "tracks_count": len(tracks_df),
-            "artists_count": len(artist_mapping),
-            "search_index_size": len(search_index)
-        })
+            st.markdown("---")
+            st.markdown("## 🤖 AI Recommendations")
+            
+            render_recommendations_section(
+                self.tracks_df,
+                self.artist_mapping,
+                self.models,
+                st.session_state.selected_track_idx,
+                self.spotify_client,
+                st.session_state.num_recommendations,
+                st.session_state.recommendation_type
+            )
+    
+    def render_search_results(self):
+        """Render search results if any"""
+        if st.session_state.search_results:
+            from components.track_grid import render_track_grid
+            
+            st.markdown("## 🔍 Search Results")
+            search_df = pd.DataFrame(st.session_state.search_results)
+            render_track_grid(
+                search_df, 
+                self.artist_mapping, 
+                self.spotify_client,
+                grid_id="search"
+            )
+    
+    def render_now_playing(self):
+        """Render the now playing section at the bottom"""
+        if st.session_state.current_track is not None:
+            from components.music_player import render_bottom_player
+            
+            track = self.tracks_df.iloc[st.session_state.current_track]
+            render_bottom_player(track, self.artist_mapping, self.spotify_client)
+    
+    def search_tracks(self, query: str) -> List[Dict]:
+        """Search for tracks based on query"""
+        if not query or self.tracks_df.empty:
+            return []
         
-        if models is None:
-            logger.error("Cannot load models - models is None")
-            st.error("Cannot load models. Please ensure the models are exported to the data/models directory.")
-            st.info("Run the HDBSCAN notebook to generate the required models.")
-            return tracks_df, artist_mapping, search_index, None
+        query = query.lower()
         
-        # Check essential models
-        essential_models = ['knn', 'embeddings']
-        missing_models = [m for m in essential_models if models.get(m) is None]
-        
-        if missing_models:
-            logger.error(f"Missing essential models: {missing_models}")
-            st.error(f"Missing essential models: {missing_models}")
-            st.info("Please ensure all required models are exported from the HDBSCAN notebook.")
-            return tracks_df, artist_mapping, search_index, None
-        
-        # Show success notification for models
-        available_models = [name for name, model in models.items() if model is not None]
-        show_success_message(
-            f"Successfully loaded {len(available_models)} recommendation models: {', '.join(available_models)}", 
-            "🤖"
+        # Create search index
+        search_df = self.tracks_df.copy()
+        search_df['artist_name'] = search_df['artists_id'].apply(
+            lambda x: get_artist_name(x, self.artist_mapping)
+        )
+        search_df['search_text'] = (
+            search_df['name'].str.lower() + ' ' + 
+            search_df['artist_name'].str.lower()
         )
         
-        return tracks_df, artist_mapping, search_index, models
+        # Perform search
+        mask = search_df['search_text'].str.contains(query, na=False)
+        results = search_df[mask].sort_values('popularity', ascending=False)
+        
+        return results.head(20).to_dict('records')
     
-    def create_sidebar_interface(self, tracks_df, search_index):
-        """Create the sidebar interface and return configuration and selected song."""
-        # Create sidebar controls
-        config = create_sidebar_controls(spotify_client, enable_audio_settings=True)
+    def get_recommendations(self, track_idx: int, n_recommendations: int = 12, rec_type: str = "cluster"):
+        """Get recommendations for a track"""
+        if not self.models or self.tracks_df.empty:
+            return []
         
-        # Audio preview analysis
-        display_audio_preview_analysis(tracks_df)
-        
-        # Diagnostic search for troubleshooting
-        with st.sidebar.expander("🔍 Song Diagnostics", expanded=False):
-            st.markdown("**Search for specific songs to check preview status:**")
-            search_term = st.text_input("Song name (e.g., 'Blood'):", key="diagnostic_search")
-            
-            if search_term:
-                matches = search_song_by_name(tracks_df, search_term)
-                if not matches.empty:
-                    st.markdown(f"**Found {len(matches)} songs matching '{search_term}':**")
-                    for _, song in matches.head(5).iterrows():
-                        st.text(f"🎵 {song['name']}")
-                        st.text(f"   Preview: {song['preview_status']}")
-                        if not song['has_preview']:
-                            preview_url = song.get('preview_url', 'N/A')
-                            st.text(f"   URL: {str(preview_url)[:30]}...")
-                        st.text("---")
-                else:
-                    st.info(f"No songs found matching '{search_term}'")
-        
-        # Enhanced song search interface
-        selected_idx = create_song_search_interface(tracks_df, search_index)
-        
-        # Advanced search filters
-        filtered_search_result = create_advanced_search_interface(search_index)
-        if filtered_search_result is not None and selected_idx is None:
-            selected_idx = filtered_search_result
-        
-        # Fallback to first song if no selection
-        if selected_idx is None:
-            selected_idx = 0
-            logger.info("No song selected by user, using default (index 0)")
-            st.sidebar.info("💡 Using first song as default. Try searching above!")
-        
-        logger.info(f"Selected song index: {selected_idx}")
-        log_user_action("song_selected", {
-            "song_index": selected_idx,
-            "song_name": tracks_df.iloc[selected_idx].get('name', 'Unknown')
-        })
-        
-        return config, selected_idx
-    
-    def display_selected_song(self, selected_song, artist_mapping, config):
-        """Display information about the selected song."""
-        artist_name = get_artist_name(selected_song.get('artists_id', ''), artist_mapping)
-        
-        st.markdown("---")
-        st.markdown("## 🎵 Selected Song")
-        
-        # Create two columns for selected song display
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.markdown(f"### **{selected_song['name']}**")
-            st.markdown(f"**Artist:** {artist_name}")
-            
-            # Song details
-            if not pd.isna(selected_song.get('popularity')):
-                st.markdown(f"**Popularity:** {selected_song['popularity']}/100")
-            if not pd.isna(selected_song.get('duration_ms')):
-                from utils.data_utils import format_duration
-                duration = format_duration(selected_song['duration_ms'])
-                st.markdown(f"**Duration:** {duration}")
-            
-            # Audio features preview
-            features_col1, features_col2 = st.columns(2)
-            with features_col1:
-                if not pd.isna(selected_song.get('danceability')):
-                    st.metric("Danceability", f"{selected_song['danceability']:.3f}")
-                if not pd.isna(selected_song.get('energy')):
-                    st.metric("Energy", f"{selected_song['energy']:.3f}")
-            with features_col2:
-                if not pd.isna(selected_song.get('valence')):
-                    st.metric("Valence", f"{selected_song['valence']:.3f}")
-                if not pd.isna(selected_song.get('acousticness')):
-                    st.metric("Acousticness", f"{selected_song['acousticness']:.3f}")
-        
-        with col2:
-            # Audio player for selected song
-            display_audio_player(selected_song, "🎧 Preview:", artist_mapping)
-            
-            # Enhanced Spotify features for selected song
-            if spotify_client and config.get('enable_enhanced', False):
-                st.markdown("**🎵 Enhanced Info:**")
-                if st.button("View Enhanced Details", key="enhanced_selected"):
-                    if SPOTIFY_API_AVAILABLE:
-                        display_enhanced_track_info(spotify_client, selected_song)
-    
-    def generate_and_display_recommendations(self, models, tracks_df, selected_idx, config, artist_mapping):
-        """Generate and display recommendations using both cluster-based and global methods."""
-        st.markdown("---")
-        st.markdown("## 🎯 Music Recommendations")
-        
-        n_recommendations = config.get('n_recommendations', 5)
-        enable_enhanced = config.get('enable_enhanced', False)
-        
-        # Create tabs for different recommendation types
-        if models.get('labels') is not None:
-            tab1, tab2 = st.tabs(["🎵 Cluster-Based", "🌐 Global Similarity"])
-            
-            with tab1:
-                st.markdown("### Similar Songs from Same Musical Cluster")
-                
-                # Generate cluster-based recommendations
-                cluster_distances, cluster_indices = get_recommendations_within_cluster(
-                    models['knn'], 
-                    models['embeddings'], 
-                    models['labels'], 
-                    selected_idx, 
-                    n_neighbors=n_recommendations + 1
-                )
-                
-                if cluster_distances is not None and cluster_indices is not None:
-                    display_recommendations_with_cards(
-                        tracks_df, 
-                        cluster_indices, 
-                        cluster_distances,
-                        "🎵 Cluster-Based Recommendations",
-                        f"Songs from the same musical cluster as '{tracks_df.iloc[selected_idx]['name']}'",
-                        artist_mapping,
-                        spotify_client,
-                        enable_enhanced
-                    )
-                else:
-                    st.error("Could not generate cluster-based recommendations")
-            
-            with tab2:
-                st.markdown("### Similar Songs from Entire Dataset")
-                
-                # Generate global recommendations
-                global_distances, global_indices = get_global_recommendations(
-                    models['knn'], 
-                    models['embeddings'], 
-                    selected_idx, 
-                    n_neighbors=n_recommendations + 1
-                )
-                
-                if global_distances is not None and global_indices is not None:
-                    display_recommendations_with_cards(
-                        tracks_df, 
-                        global_indices, 
-                        global_distances,
-                        "🌐 Global Similarity Recommendations",
-                        f"Most similar songs to '{tracks_df.iloc[selected_idx]['name']}' from entire dataset",
-                        artist_mapping,
-                        spotify_client,
-                        enable_enhanced
-                    )
-                else:
-                    st.error("Could not generate global recommendations")
-        
-        else:
-            # Only global recommendations if cluster labels not available
-            st.markdown("### 🌐 Similar Songs")
-            
-            global_distances, global_indices = get_global_recommendations(
-                models['knn'], 
-                models['embeddings'], 
-                selected_idx, 
-                n_neighbors=n_recommendations + 1
-            )
-            
-            if global_distances is not None and global_indices is not None:
-                display_recommendations_with_cards(
-                    tracks_df, 
-                    global_indices, 
-                    global_distances,
-                    "🎵 Music Recommendations",
-                    f"Songs most similar to '{tracks_df.iloc[selected_idx]['name']}'",
-                    artist_mapping,
-                    spotify_client,
-                    enable_enhanced
+        try:
+            if rec_type == "cluster" and self.models.get('labels') is not None:
+                distances, indices = get_recommendations_within_cluster(
+                    self.models['knn'], self.models['embeddings'], 
+                    self.models['labels'], track_idx, n_neighbors=n_recommendations + 1
                 )
             else:
-                st.error("Could not generate recommendations")
+                distances, indices = get_global_recommendations(
+                    self.models['knn'], self.models['embeddings'], 
+                    track_idx, n_neighbors=n_recommendations + 1
+                )
+            
+            # Return recommendations (excluding the input track)
+            rec_indices = indices[1:]  # Skip first one (input track)
+            return self.tracks_df.iloc[rec_indices]
+            
+        except Exception as e:
+            logger.error(f"Error getting recommendations: {e}")
+            return pd.DataFrame()
     
     def run(self):
-        """Main application entry point."""
-        logger.info("Starting main application function")
-        app_start_time = time.time()
+        """Main application runner"""
+        logger.info("Starting Spotify-like Music Discovery App")
         
-        # Page title
-        st.title("🎵 Spotify Music Recommendation System")
-        st.markdown("**HDBSCAN Clustering with KNN-Based Song Discovery**")
+        if self.tracks_df.empty:
+            st.error("❌ Could not load track data. Please check data files.")
+            return
         
-        # Load application data
-        tracks_df, artist_mapping, search_index, models = self.load_application_data()
+        # Custom CSS for Spotify-like layout
+        st.markdown("""
+        <style>
+        .main .block-container {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            max-width: 100%;
+        }
         
-        if tracks_df is None or models is None:
-            return  # Exit if critical data couldn't be loaded
+        .spotify-header {
+            text-align: center;
+            padding: 1.5rem 0;
+            background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(29, 185, 84, 0.3);
+        }
         
-        # Create sidebar interface
-        config, selected_idx = self.create_sidebar_interface(tracks_df, search_index)
+        .spotify-header h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
         
-        # Display selected song information
-        selected_song = tracks_df.iloc[selected_idx]
-        self.display_selected_song(selected_song, artist_mapping, config)
+        .subtitle {
+            font-size: 1rem;
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+            color: white;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         
-        # Generate and display recommendations
-        self.generate_and_display_recommendations(models, tracks_df, selected_idx, config, artist_mapping)
+        # Render sidebar
+        self.render_sidebar()
         
-        # Create footer with statistics
-        available_models = [name for name, model in models.items() if model is not None]
-        create_app_footer(
-            tracks_count=len(tracks_df),
-            artists_count=len(artist_mapping),
-            models_count=len(available_models),
-            spotify_connected=config.get('spotify_connected', False)
-        )
+        # Main content area (no column wrapper to avoid nesting issues)
+        # Render main header
+        self.render_main_header()
         
-        # Log total app initialization time
-        app_init_time = time.time() - app_start_time
-        log_performance("application_initialization", app_init_time, {
-            "spotify_available": spotify_client is not None,
-            "models_loaded": len(available_models),
-            "tracks_loaded": len(tracks_df)
-        })
+        # Render search results if any
+        self.render_search_results()
+        
+        # Render featured tracks if no search results
+        if not st.session_state.search_results:
+            self.render_featured_tracks()
+        
+        # Render recommendations if a track is selected
+        self.render_recommendations()
+        
+        # Render now playing at the bottom (outside columns)
+        self.render_now_playing()
+        
+        # Footer
+        st.markdown("---")
+        st.markdown(f"""
+        <div style="text-align: center; padding: 1rem; opacity: 0.7; font-size: 0.9rem;">
+            <p>🎵 Spotify Music Recommendation | 🎧 {len(self.tracks_df):,} tracks loaded | 
+            🤖 AI Models {'✅' if self.models else '❌'} | 
+            🎼 Spotify API {'✅' if self.spotify_available else '❌'}</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 def main():
-    """Main function to run the Spotify Music Recommendation System."""
-    app = SpotifyRecommendationApp()
+    """Main function to run the Spotify-like Music Discovery App"""
+    app = SpotifyLikeApp()
     app.run()
 
 

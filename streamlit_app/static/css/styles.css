@@ -1,308 +1,523 @@
-/* Spotify Music Recommendation System - Custom Styles */
+/* ========================================
+   Spotify-Inspired Music Discovery Interface
+   ======================================== */
 
-/* Recommendation Cards */
-.recommendation-card {
-    background: linear-gradient(135deg, #f8f9fa, #ffffff);
-    border: 2px solid #e9ecef;
-    border-radius: 16px;
-    padding: 16px;
-    margin: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    color: #333;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    min-height: 320px;
-    display: flex;
-    flex-direction: column;
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Global styles */
+.stApp {
+    background: #121212;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
 }
 
-.recommendation-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(29, 185, 84, 0.2);
-    border-color: #1DB954;
+/* Sidebar styling */
+.css-1d391kg {
+    background: #000000;
+    border-right: 1px solid #333;
 }
 
-.recommendation-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #1DB954, #1ed760);
+.sidebar .sidebar-content {
+    background: #000000;
+    padding: 1rem;
 }
 
-/* Compact Track Styles */
-.compact-track-title {
-    color: #2c3e50;
-    font-weight: bold;
-    font-size: 16px;
-    margin-bottom: 6px;
-    line-height: 1.2;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    height: auto;
-    min-height: 38px;
+/* Main content area */
+.main .block-container {
+    max-width: 100%;
+    padding: 1rem 2rem;
+    background: #121212;
 }
 
-.compact-track-artist {
-    color: #6c757d;
-    font-size: 14px;
-    margin-bottom: 12px;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.compact-stats {
-    display: flex;
-    gap: 8px;
-    margin: 12px 0;
-    flex-wrap: wrap;
-}
-
-.compact-stat-item {
-    background: rgba(29, 185, 84, 0.1);
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    color: #1DB954;
-    border: 1px solid rgba(29, 185, 84, 0.3);
-    font-weight: 500;
-}
-
-.compact-audio-features {
-    background: rgba(29, 185, 84, 0.05);
-    border-radius: 8px;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid rgba(29, 185, 84, 0.2);
-    flex-grow: 1;
-}
-
-.compact-feature-bar {
-    display: flex;
-    align-items: center;
-    margin: 4px 0;
-    font-size: 11px;
-    color: #6c757d;
-}
-
-.compact-feature-name {
-    width: 70px;
-    font-weight: 500;
-    font-size: 10px;
-}
-
-.compact-feature-value {
-    flex: 1;
-    margin: 0 8px;
-    height: 4px;
-    background: rgba(108, 117, 125, 0.2);
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.compact-feature-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #1DB954, #1ed760);
-    border-radius: 2px;
-}
-
-.compact-feature-score {
-    color: #1DB954;
-    font-weight: bold;
-    width: 30px;
-    text-align: right;
-    font-size: 10px;
-}
-
-.compact-similarity-badge {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: linear-gradient(135deg, #1DB954, #1ed760);
-    color: white;
-    padding: 6px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: bold;
-    box-shadow: 0 1px 4px rgba(29, 185, 84, 0.3);
-}
-
-.compact-audio-player {
-    margin-top: auto;
-    padding-top: 10px;
-}
-
-/* Detailed View Styles */
-.detailed-info {
-    background: rgba(248, 249, 250, 0.8);
-    border-radius: 8px;
-    padding: 12px;
-    margin: 8px 0;
-    border: 1px solid #e9ecef;
-}
-
-.detailed-audio-features {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin: 10px 0;
-}
-
-.detailed-feature-bar {
-    display: flex;
-    align-items: center;
-    margin: 3px 0;
-    font-size: 11px;
-    color: #495057;
-}
-
-.detailed-feature-name {
-    width: 80px;
-    font-weight: 500;
-    font-size: 10px;
-}
-
-.detailed-feature-value {
-    flex: 1;
-    margin: 0 6px;
-    height: 4px;
-    background: rgba(108, 117, 125, 0.2);
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.detailed-feature-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #1DB954, #1ed760);
-    border-radius: 2px;
-}
-
-.detailed-feature-score {
-    color: #1DB954;
-    font-weight: bold;
-    width: 35px;
-    text-align: right;
-    font-size: 10px;
-}
-
-/* Info Sections */
-.info-section {
-    margin: 8px 0;
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 6px;
-    border-left: 3px solid #1DB954;
-}
-
-.info-section h6 {
-    margin: 0 0 6px 0;
-    color: #1DB954;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    margin: 3px 0;
-    font-size: 11px;
-}
-
-.info-label {
-    color: #6c757d;
-    font-weight: 500;
-}
-
-.info-value {
-    color: #495057;
-    font-weight: bold;
-}
-
-/* Grid Layout */
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 16px;
-    margin: 16px 0;
-}
-
-.grid-item {
-    display: flex;
-    flex-direction: column;
-}
-
-/* Headers and Buttons */
-.recommendation-header {
-    background: linear-gradient(135deg, #1DB954, #1ed760);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 12px;
+/* Header styling */
+.spotify-header {
     text-align: center;
-    margin: 0 0 8px 0;
-    font-size: 12px;
-    font-weight: bold;
+    padding: 1.5rem 0;
+    background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(29, 185, 84, 0.3);
 }
 
-.expand-button {
-    background: linear-gradient(135deg, #17a2b8, #138496);
+.spotify-header h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.subtitle {
+    font-size: 1rem;
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    color: white;
+}
+
+/* Track grid styling */
+.track-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.track-card {
+    background: #181818;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.track-card:hover {
+    background: #282828;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+/* Album cover styling */
+.album-cover {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+/* Track info styling */
+.track-info h4 {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.3;
+}
+
+.track-info .artist {
+    color: #b3b3b3;
+    font-size: 0.9rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.track-info .details {
+    color: #b3b3b3;
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+/* Button styling */
+.stButton > button {
+    background: #1db954;
     color: white;
     border: none;
-    padding: 6px 12px;
-    border-radius: 15px;
-    font-size: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin: 8px auto 0 auto;
-    display: block;
-    width: fit-content;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(29, 185, 84, 0.3);
+    font-size: 0.9rem;
 }
 
-.expand-button:hover {
-    background: linear-gradient(135deg, #138496, #117a8b);
+.stButton > button:hover {
+    background: #1ed760;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+}
+
+.stButton > button:active {
+    transform: translateY(0);
+}
+
+/* Sidebar button styling */
+.sidebar .stButton > button {
+    background: transparent;
+    color: #b3b3b3;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-align: left;
+}
+
+.sidebar .stButton > button:hover {
+    background: #282828;
+    color: #ffffff;
+    border-color: #1db954;
+}
+
+/* Primary button in sidebar */
+.sidebar .stButton > button[data-testid="primary"] {
+    background: #1db954;
+    color: white;
+    border: none;
+}
+
+.sidebar .stButton > button[data-testid="primary"]:hover {
+    background: #1ed760;
+}
+
+/* Input styling */
+.stTextInput > div > div > input {
+    background: #333 !important;
+    border: 1px solid #555 !important;
+    border-radius: 20px !important;
+    color: #ffffff !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+}
+
+.stTextInput > div > div > input:focus {
+    border-color: #1db954 !important;
+    box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2) !important;
+}
+
+.stTextInput > div > div > input::placeholder {
+    color: #b3b3b3;
+}
+
+/* Selectbox styling */
+.stSelectbox > div > div {
+    background: #333 !important;
+    border: 1px solid #555 !important;
+    border-radius: 8px !important;
+    color: #ffffff !important;
+}
+
+.stSelectbox > div > div:focus-within {
+    border-color: #1db954 !important;
+}
+
+/* Slider styling */
+.stSlider > div > div > div > div {
+    background: #1db954 !important;
+}
+
+.stSlider > div > div > div {
+    background: #333 !important;
+}
+
+/* Audio feature bars */
+.feature-bar {
+    display: flex;
+    align-items: center;
+    margin: 0.3rem 0;
+}
+
+.feature-bar .label {
+    color: #b3b3b3;
+    font-size: 0.8rem;
+    width: 80px;
+    text-align: left;
+}
+
+.feature-bar .bar {
+    flex: 1;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    margin: 0 0.5rem;
+    overflow: hidden;
+}
+
+.feature-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1db954, #1ed760);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.feature-bar .value {
+    color: #ffffff;
+    font-size: 0.8rem;
+    width: 35px;
+    text-align: right;
+}
+
+/* Now Playing section */
+.now-playing {
+    background: #181818;
+    border-top: 1px solid #333;
+    padding: 1rem;
+    margin-top: 2rem;
+    border-radius: 8px 8px 0 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+}
+
+.now-playing .track-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.now-playing .album-cover {
+    width: 60px;
+    height: 60px;
+    border-radius: 4px;
+}
+
+/* Progress bar styling */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #1db954;
+    border-radius: 2px;
+    transition: width 0.1s ease;
+}
+
+.time-display {
+    color: #b3b3b3;
+    font-size: 0.8rem;
+    min-width: 35px;
+}
+
+/* Control buttons */
+.control-button {
+    background: transparent;
+    border: none;
+    color: #b3b3b3;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.control-button:hover {
+    color: #ffffff;
+    background: rgba(255,255,255,0.1);
+}
+
+.control-button.active {
+    color: #1db954;
+}
+
+.play-button {
+    background: #1db954;
+    color: white;
+    font-size: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.play-button:hover {
+    background: #1ed760;
     transform: scale(1.05);
 }
 
-.feature-set-header {
-    background: linear-gradient(135deg, #1DB954, #1ed760);
-    color: white;
-    padding: 15px;
-    border-radius: 8px;
-    text-align: center;
-    margin: 15px 0;
-    box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
+/* Recommendations section */
+.recommendations-header {
+    margin: 2rem 0 1rem 0;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #333;
 }
 
-.feature-set-header h4 {
+.recommendations-header h3 {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 600;
     margin: 0;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
-/* Metric Cards */
-.metric-card {
-    background-color: #2c3e50;
-    color: white;
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+.recommendations-header p {
+    color: #b3b3b3;
+    font-size: 0.9rem;
+    margin: 0.5rem 0 0 0;
 }
 
-/* Streamlit Component Overrides */
-.stSelectbox > div > div {
-    background-color: white;
-    color: #2c3e50;
+/* Current track display */
+.current-track {
+    background: #181818;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border: 1px solid #333;
 }
 
-.stTextInput > div > div > input {
-    background-color: white;
-    color: #2c3e50;
+.current-track .track-title {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.current-track .artist-name {
+    color: #1db954;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0.5rem 0;
+}
+
+.current-track .track-details {
+    color: #b3b3b3;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Insights section */
+.insights {
+    background: #181818;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 1px solid #333;
+}
+
+.insights h4 {
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+}
+
+.insight-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0.5rem 0;
+}
+
+.insight-label {
+    color: #b3b3b3;
+    font-size: 0.9rem;
+}
+
+.insight-value {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Status indicators */
+.status-success {
+    color: #1db954;
+}
+
+.status-warning {
+    color: #ffa500;
+}
+
+.status-error {
+    color: #ff6b6b;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .track-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .spotify-header h1 {
+        font-size: 2rem;
+    }
+    
+    .main .block-container {
+        padding: 1rem;
+    }
+    
+    .current-track {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .track-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .track-card {
+        padding: 0.5rem;
+    }
+    
+    .spotify-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Hide Streamlit branding */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+
+/* Hide unwanted code blocks that might show HTML */
+.stCode[data-testid="stCode"] {
+    display: none !important;
+}
+
+.stMarkdown[data-testid="stMarkdown"] pre[data-testid="stMarkdownPre"] {
+    display: none !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #121212;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #535353;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #727272;
+}
+
+/* Selection color */
+::selection {
+    background: rgba(29, 185, 84, 0.3);
+    color: #ffffff;
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Hover effects for interactive elements */
+.interactive:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
 } 

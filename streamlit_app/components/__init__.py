@@ -1,52 +1,64 @@
 """
-UI components package for the Spotify Music Recommendation System.
+UI components package for Spotify Music Recommendation.
+Spotify-inspired modular components for the music recommendation system.
 """
 
-from .track_cards import (
-    create_spotify_track_card, display_simple_card, create_detailed_view,
-    display_recommendations_with_cards
-)
-from .search_interface import (
-    create_song_search_interface, create_advanced_search_interface,
-    create_searchable_song_index, fuzzy_search_songs
-)
-from .audio_player import display_audio_player
-from .notifications import (
-    create_streamlit_notification, show_success_message, show_info_message,
-    show_warning_message, show_error_message
-)
-from .dashboard import (
-    create_logging_dashboard, create_app_footer, create_sidebar_controls,
-    display_audio_preview_analysis, search_song_by_name
-)
+# Core components for the Spotify-like interface
+try:
+    from .sidebar import render_sidebar
+except ImportError:
+    render_sidebar = None
+
+try:
+    from .track_grid import render_track_grid, render_track_card, render_track_list_view
+except ImportError:
+    render_track_grid = None
+    render_track_card = None
+    render_track_list_view = None
+
+try:
+    from .music_player import render_bottom_player, render_mini_player
+except ImportError:
+    render_bottom_player = None
+    render_mini_player = None
+
+try:
+    from .recommendations import render_recommendations_section, generate_recommendations
+except ImportError:
+    render_recommendations_section = None
+    generate_recommendations = None
+
+# Legacy components (for backward compatibility)
+try:
+    from .music_player import render_complete_music_player
+except ImportError:
+    render_complete_music_player = None
+
+try:
+    from .recommendation_cards import (
+        render_enhanced_recommendations_grid,
+        create_recommendation_comparison_chart,
+        create_recommendation_insights
+    )
+except ImportError:
+    render_enhanced_recommendations_grid = None
+    create_recommendation_comparison_chart = None
+    create_recommendation_insights = None
 
 __all__ = [
-    # Track cards
-    'create_spotify_track_card',
-    'display_simple_card', 
-    'create_detailed_view',
-    'display_recommendations_with_cards',
+    # Main Spotify-like components
+    'render_sidebar',
+    'render_track_grid',
+    'render_track_card', 
+    'render_track_list_view',
+    'render_bottom_player',
+    'render_mini_player',
+    'render_recommendations_section',
+    'generate_recommendations',
     
-    # Search interface
-    'create_song_search_interface',
-    'create_advanced_search_interface',
-    'create_searchable_song_index',
-    'fuzzy_search_songs',
-    
-    # Audio player
-    'display_audio_player',
-    
-    # Notifications
-    'create_streamlit_notification',
-    'show_success_message',
-    'show_info_message',
-    'show_warning_message',
-    'show_error_message',
-    
-    # Dashboard
-    'create_logging_dashboard',
-    'create_app_footer',
-    'create_sidebar_controls',
-    'display_audio_preview_analysis',
-    'search_song_by_name'
+    # Legacy components (backward compatibility)
+    'render_complete_music_player',
+    'render_enhanced_recommendations_grid',
+    'create_recommendation_comparison_chart',
+    'create_recommendation_insights'
 ] 
