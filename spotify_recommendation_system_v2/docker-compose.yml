@@ -1,0 +1,214 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15
+    container_name: spotify_postgres
+    environment:
+      POSTGRES_DB: spotify_recommendations
+      POSTGRES_USER: spotify_user
+      POSTGRES_PASSWORD: spotify_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spotify_user -d spotify_recommendations"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spotify-network
+
+  # Model Preparation Service
+  model-prep:
+    build:
+      context: ./model-prep
+      dockerfile: Dockerfile
+    container_name: spotify_model_prep
+    volumes:
+      - ../data:/app/data
+      - ../data/models:/app/models  # Direct mount to data/models
+      - ../scripts/Models:/app/notebooks  # Mount notebooks for model training
+    environment:
+      - DATABASE_URL=postgresql://spotify_user:spotify_password@database:5432/spotify_recommendations
+      - DATA_PATH=/app/data
+      - MODELS_PATH=/app/models
+      - NOTEBOOKS_PATH=/app/notebooks
+      - PYTHONPATH=/app
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - spotify-network
+    profiles:
+      - setup
+
+  # Data Import Service
+  data-import:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: spotify_data_import
+    command: ["python", "import_wrapper.py"]
+    volumes:
+      - ../data:/app/data
+      - ./backend/logs:/app/logs
+      - /tmp:/tmp  # For lock and success files
+    environment:
+      - DATABASE_URL=postgresql://spotify_user:spotify_password@database:5432/spotify_recommendations
+      - DATA_PATH=/app/data
+      - RAW_DATA_PATH=/app/data/raw
+      - LOG_LEVEL=INFO
+      - IMPORT_BATCH_SIZE=1000
+      - IMPORT_SKIP_DUPLICATES=true
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: "no"  # Don't restart automatically to prevent infinite loops
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]  # Simple health check
+      interval: 30s
+      timeout: 10s
+      retries: 1
+      start_period: 10s
+    networks:
+      - spotify-network
+    profiles:
+      - setup
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: spotify_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../data:/app/data
+      - ../data/models:/app/models  # Direct mount to data/models
+      - ./backend/logs:/app/logs
+    environment:
+      - DATABASE_URL=postgresql://spotify_user:spotify_password@database:5432/spotify_recommendations
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - MODELS_PATH=/app/models
+      - DATA_PATH=/app/data
+      - RAW_DATA_PATH=/app/data/raw
+      - CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000","http://frontend:3000","http://localhost:5173","http://localhost:8501","http://127.0.0.1:8501"]
+      - NLTK_DATA=/app/nltk_data  # NLTK data path for lyrics processing
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - spotify-network
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        VITE_BACKEND_URL: http://localhost:8000
+        VITE_API_VERSION: v2
+        VITE_NODE_ENV: production
+    container_name: spotify_frontend
+    ports:
+      - "8501:80"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - spotify-network
+
+  # Frontend Development (alternative service)
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+      args:
+        VITE_BACKEND_URL: http://localhost:8000
+        VITE_API_VERSION: v2
+        VITE_NODE_ENV: development
+    container_name: spotify_frontend_dev
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - spotify-network
+    profiles:
+      - development
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: spotify_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - spotify-network
+    profiles:
+      - production
+
+  # PGAdmin for Database Management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: spotify_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@spotify.local
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - database
+    restart: unless-stopped
+    networks:
+      - spotify-network
+    profiles:
+      - admin
+
+volumes:
+  postgres_data:
+    driver: local
+  model_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  spotify-network:
+    driver: bridge 

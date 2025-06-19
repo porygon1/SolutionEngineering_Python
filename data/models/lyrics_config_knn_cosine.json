@@ -1,0 +1,11 @@
+{
+  "model_type": "knn_cosine",
+  "model_params": {
+    "n_neighbors": 50,
+    "metric": "cosine",
+    "algorithm": "brute"
+  },
+  "sklearn_version": "1.3.2",
+  "has_svd": false,
+  "n_components": null
+}

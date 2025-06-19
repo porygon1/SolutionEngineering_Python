@@ -1,0 +1,7 @@
+# SSL certificates directory
+# Place your SSL certificates here for HTTPS support:
+# - cert.pem (certificate file)
+# - key.pem (private key file)
+#
+# For development, you can generate self-signed certificates:
+# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem 

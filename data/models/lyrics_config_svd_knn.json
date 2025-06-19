@@ -1,0 +1,10 @@
+{
+  "model_type": "svd_knn",
+  "model_params": {
+    "n_components": 100,
+    "n_neighbors": 50
+  },
+  "sklearn_version": "1.3.2",
+  "has_svd": true,
+  "n_components": 100
+}

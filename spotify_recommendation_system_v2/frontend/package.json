@@ -1,0 +1,81 @@
+{
+  "name": "spotify-recommendation-frontend",
+  "version": "2.0.0",
+  "description": "Spotify Music Recommendation System v2 - React Frontend",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "serve": "vite preview --host 0.0.0.0 --port 3000",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "type-check": "tsc --noEmit",
+    "start": "vite --host 0.0.0.0 --port 5173",
+    "serve": "vite preview --host 0.0.0.0 --port 4173",
+    "docker:build": "docker build -t spotify-frontend .",
+    "docker:run": "docker run -p 5173:5173 spotify-frontend",
+    "clean": "rm -rf dist node_modules/.vite",
+    "install:clean": "npm run clean && npm install"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "axios": "^1.7.9",
+    "@tanstack/react-query": "^5.62.7",
+    "framer-motion": "^11.15.0",
+    "lucide-react": "^0.468.0",
+    "clsx": "^2.1.1",
+    "@heroicons/react": "^2.2.0",
+    "@headlessui/react": "^2.2.0",
+    "react-hot-toast": "^2.4.1",
+    "zustand": "^4.4.7",
+    "date-fns": "^2.30.0",
+    "react-intersection-observer": "^9.5.3",
+    "react-virtualized-auto-sizer": "^1.0.24",
+    "react-window": "^1.8.8"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@types/react-window": "^1.8.8",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "@types/node": "^20.10.5",
+    "cross-env": "^7.0.3"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:8000"
+} 

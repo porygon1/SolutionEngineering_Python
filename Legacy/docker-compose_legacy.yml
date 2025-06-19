@@ -1,0 +1,120 @@
+# Spotify Music Recommendation System - Legacy Docker Compose
+# 
+# ⚠️  NOTICE: This is the legacy docker-compose file
+# 
+# For the new Version 2 system with PostgreSQL, React, and FastAPI, use:
+# cd spotify_recommendation_system_v2 && docker-compose up
+#
+# This file is kept for backward compatibility with the Streamlit version
+
+services:
+  # Legacy Streamlit Application
+  streamlit-app:
+    build:
+      context: ./streamlit_app
+      dockerfile: Dockerfile
+    container_name: spotify_streamlit_legacy
+    ports:
+      - "8501:8501"
+    volumes:
+      - ../data:/app/data:ro
+      - ./streamlit_app:/app:ro
+    environment:
+      - PYTHONPATH=/app
+      - DATA_PATH=/app/data
+    restart: unless-stopped
+    networks:
+      - legacy-network
+    profiles:
+      - legacy
+      - streamlit
+
+  # Data volume for legacy system
+  data-volume:
+    image: busybox
+    container_name: spotify_data_legacy
+    volumes:
+      - ../data:/data
+    command: ["sh", "-c", "echo 'Data volume initialized' && sleep infinity"]
+    networks:
+      - legacy-network
+    profiles:
+      - legacy
+
+networks:
+  legacy-network:
+    driver: bridge
+
+# =============================================================================
+# 🌟 NEW VERSION 2 SYSTEM AVAILABLE
+# =============================================================================
+# 
+# The new PostgreSQL + FastAPI + React system is available in:
+# spotify_recommendation_system_v2/
+#
+# To use the new system:
+#
+# 1. Navigate to v2 directory:
+#    cd spotify_recommendation_system_v2
+#
+# 2. Start the complete system:
+#    docker-compose up --build
+#
+# 3. Access the applications:
+#    - Frontend: http://localhost:3000
+#    - API: http://localhost:8000  
+#    - Database Admin: http://localhost:5050
+#
+# 4. Features in v2:
+#    - PostgreSQL database with normalized schema
+#    - Modern React frontend with Spotify theming
+#    - FastAPI backend with async support
+#    - Production-ready deployment
+#    - Advanced ML pipeline with caching
+#    - Comprehensive API documentation
+#
+# =============================================================================
+
+# Optional: Add a PostgreSQL database for storing processed data
+# postgres:
+#   image: postgres:14-alpine
+#   container_name: spotify-analysis-db
+#   ports:
+#     - "5432:5432"
+#   volumes:
+#     - postgres_data:/var/lib/postgresql/data
+#   environment:
+#     - POSTGRES_USER=postgres
+#     - POSTGRES_PASSWORD=postgres
+#     - POSTGRES_DB=spotify_data
+#   restart: unless-stopped
+#   healthcheck:
+#     test: ["CMD-SHELL", "pg_isready -U postgres"]
+#     interval: 30s
+#     timeout: 5s
+#     retries: 3
+#     start_period: 10s
+
+# Optional: Add an Adminer for database management
+# adminer:
+#   image: adminer:latest
+#   container_name: spotify-analysis-adminer
+#   ports:
+#     - "8080:8080"
+#   restart: unless-stopped
+#   depends_on:
+#     - postgres
+
+# Optional: Add a data processing service
+# data-processor:
+#   build: ./data_processor
+#   container_name: spotify-analysis-processor
+#   volumes:
+#     - ./data:/app/data
+#   depends_on:
+#     - postgres
+#   restart: on-failure
+
+# Define volumes
+# volumes:
+#   postgres_data: 

@@ -1,0 +1,762 @@
+/* ========================================
+   Spotify-Inspired Music Discovery Interface
+   ======================================== */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Global styles */
+.stApp {
+    background: #121212;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Sidebar styling */
+.css-1d391kg {
+    background: #000000;
+    border-right: 1px solid #333;
+}
+
+.sidebar .sidebar-content {
+    background: #000000;
+    padding: 1rem;
+}
+
+/* Main content area */
+.main .block-container {
+    padding-top: 1rem;
+    padding-bottom: 100px;
+    max-width: 100%;
+}
+
+/* Header styling */
+.spotify-header {
+    text-align: center;
+    padding: 1.5rem 0;
+    background: #1db954;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.spotify-header h1 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+}
+
+.subtitle {
+    font-size: 1rem;
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    color: white;
+}
+
+/* Track grid styling */
+.track-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.track-card {
+    background: #181818;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    border: 1px solid #333;
+}
+
+.track-card:hover {
+    background: #282828;
+}
+
+/* Album cover styling */
+.album-cover {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.album-cover:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Album cover placeholder styling */
+.album-placeholder {
+    width: 100%;
+    height: 200px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: linear-gradient(135deg, #1db954, #1ed760);
+}
+
+.album-placeholder:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Track info styling */
+.track-info h4 {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.3;
+}
+
+.track-info .artist {
+    color: #b3b3b3;
+    font-size: 0.9rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.track-info .details {
+    color: #b3b3b3;
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+/* Button styling */
+.stButton > button {
+    background: #1db954;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.stButton > button:hover {
+    background: #1ed760;
+}
+
+/* Input styling */
+.stTextInput > div > div > input {
+    background: #333 !important;
+    border: 1px solid #555 !important;
+    border-radius: 4px !important;
+    color: #ffffff !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+}
+
+.stTextInput > div > div > input:focus {
+    border-color: #1db954 !important;
+}
+
+.stTextInput > div > div > input::placeholder {
+    color: #b3b3b3;
+}
+
+/* Selectbox styling */
+.stSelectbox > div > div {
+    background: #333 !important;
+    border: 1px solid #555 !important;
+    border-radius: 4px !important;
+    color: #ffffff !important;
+}
+
+.stSelectbox > div > div:focus-within {
+    border-color: #1db954 !important;
+}
+
+/* Slider styling */
+.stSlider > div > div > div > div {
+    background: #1db954 !important;
+}
+
+.stSlider > div > div > div {
+    background: #333 !important;
+}
+
+/* Feature bars */
+.feature-bar {
+    display: flex;
+    align-items: center;
+    margin: 0.3rem 0;
+}
+
+.feature-bar .label {
+    color: #b3b3b3;
+    font-size: 0.8rem;
+    width: 80px;
+    text-align: left;
+}
+
+.feature-bar .bar {
+    flex: 1;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    margin: 0 0.5rem;
+    overflow: hidden;
+}
+
+.feature-bar .fill {
+    height: 100%;
+    background: #1db954;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.feature-bar .value {
+    color: #ffffff;
+    font-size: 0.8rem;
+    width: 35px;
+    text-align: right;
+}
+
+/* Now Playing section */
+.now-playing {
+    background: #181818;
+    border-top: 1px solid #333;
+    padding: 1rem;
+    margin-top: 2rem;
+    border-radius: 4px 4px 0 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+}
+
+/* Progress bar styling */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #1db954;
+    border-radius: 2px;
+    transition: width 0.1s ease;
+}
+
+/* Music player time display */
+.time-display {
+    color: #b3b3b3;
+    font-size: 0.8rem;
+}
+
+/* Music player controls layout */
+.player-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+}
+
+/* Control buttons */
+.control-button {
+    background: transparent;
+    border: none;
+    color: #b3b3b3;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: color 0.2s ease;
+    cursor: pointer;
+}
+
+.control-button:hover {
+    color: #ffffff;
+}
+
+.control-button.active {
+    color: #1db954;
+}
+
+.play-button {
+    background: #1db954;
+    color: white;
+    font-size: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.play-button:hover {
+    background: #1ed760;
+}
+
+/* Recommendations section */
+.recommendations-header {
+    margin: 2rem 0 1rem 0;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #333;
+}
+
+.recommendations-header h3 {
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.recommendations-header p {
+    color: #b3b3b3;
+    font-size: 0.9rem;
+    margin: 0.5rem 0 0 0;
+}
+
+/* Current track display */
+.current-track {
+    background: #181818;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    border: 1px solid #333;
+}
+
+/* Footer */
+.app-footer {
+    text-align: center;
+    padding: 1rem 0;
+    margin-top: 2rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Hide Streamlit branding */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #121212;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #535353;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #727272;
+}
+
+/* Selection color */
+::selection {
+    background: rgba(29, 185, 84, 0.3);
+    color: #ffffff;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .track-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .spotify-header h1 {
+        font-size: 2rem;
+    }
+    
+    .main .block-container {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .track-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .track-card {
+        padding: 0.5rem;
+    }
+    
+    .spotify-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Enhanced track card styling */
+.track-card-enhanced {
+    background: linear-gradient(145deg, #181818, #1a1a1a);
+    border-radius: 12px;
+    padding: 1.2rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid #333;
+    position: relative;
+    overflow: hidden;
+}
+
+.track-card-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(29, 185, 84, 0.1), rgba(30, 215, 96, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.track-card-enhanced:hover::before {
+    opacity: 1;
+}
+
+.track-card-enhanced:hover {
+    background: linear-gradient(145deg, #282828, #2a2a2a);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    border-color: #1db954;
+}
+
+/* Track title and artist styling */
+.track-title {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0.5rem 0 0.25rem 0;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.track-artist {
+    color: #b3b3b3;
+    font-size: 0.9rem;
+    margin: 0 0 0.5rem 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.track-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0.5rem 0;
+    font-size: 0.8rem;
+    color: #b3b3b3;
+}
+
+/* Enhanced button styling */
+.track-button {
+    background: linear-gradient(135deg, #1db954, #1ed760);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(29, 185, 84, 0.3);
+}
+
+.track-button:hover {
+    background: linear-gradient(135deg, #1ed760, #1fdf63);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+}
+
+.track-button:active {
+    transform: translateY(0);
+}
+
+/* Secondary button styling */
+.track-button-secondary {
+    background: transparent;
+    color: #b3b3b3;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.track-button-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-color: #1db954;
+}
+
+/* Recommendation-specific styles */
+.recommendation-card {
+    position: relative;
+    background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+    border: 2px solid #1db954 !important;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 6px 20px rgba(29, 185, 84, 0.3);
+    transition: all 0.3s ease;
+}
+
+.recommendation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(29, 185, 84, 0.4);
+    border-color: #1ed760;
+}
+
+.regular-card {
+    background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+.regular-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    border-color: #555;
+}
+
+/* Similarity score badge */
+.similarity-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: linear-gradient(45deg, #1db954, #1ed760);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 13px;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(29, 185, 84, 0.4);
+    animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+    0% { box-shadow: 0 2px 8px rgba(29, 185, 84, 0.4); }
+    50% { box-shadow: 0 4px 16px rgba(29, 185, 84, 0.6); }
+    100% { box-shadow: 0 2px 8px rgba(29, 185, 84, 0.4); }
+}
+
+/* Feature bars for recommendations */
+.feature-bar {
+    background: #333;
+    height: 4px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.feature-bar-fill {
+    background: linear-gradient(90deg, #1db954, #1ed760);
+    height: 100%;
+    transition: width 0.5s ease;
+    border-radius: 2px;
+}
+
+/* Recommendation insights cards */
+.insight-card {
+    text-align: center;
+    padding: 16px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+}
+
+.insight-card:hover {
+    transform: scale(1.05);
+}
+
+.insight-card .metric {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.insight-card .label {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* Track info styling for recommendations */
+.track-info-recommendation {
+    color: #1db954 !important;
+    font-weight: bold;
+}
+
+.track-info-regular {
+    color: white;
+}
+
+/* Audio feature visualization */
+.audio-features {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 8px 0;
+}
+
+.feature-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.feature-label {
+    font-size: 12px;
+    color: #b3b3b3;
+    font-weight: 500;
+}
+
+.feature-value {
+    font-size: 12px;
+    color: #1db954;
+    font-weight: bold;
+}
+
+/* Recommendation header styling */
+.recommendation-header {
+    background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    color: white;
+    box-shadow: 0 4px 16px rgba(29, 185, 84, 0.3);
+}
+
+.recommendation-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.recommendation-header p {
+    margin: 8px 0 0 0;
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+/* Track stats styling */
+.track-stat {
+    text-align: center;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    transition: background 0.2s ease;
+}
+
+.track-stat:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.track-stat-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #1db954;
+}
+
+.track-stat-label {
+    font-size: 11px;
+    color: #b3b3b3;
+    margin-top: 2px;
+}
+
+/* Button styling for recommendations */
+.recommendation-button {
+    background: linear-gradient(135deg, #1db954, #1ed760) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: bold !important;
+    transition: all 0.2s ease !important;
+}
+
+.recommendation-button:hover {
+    background: linear-gradient(135deg, #1ed760, #1db954) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4) !important;
+}
+
+/* Detailed analysis section */
+.analysis-section {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.similarity-match {
+    text-align: center;
+    padding: 8px;
+    background: #1db954;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    .recommendation-card,
+    .regular-card {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .similarity-badge {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+    
+    .recommendation-header {
+        padding: 16px;
+    }
+    
+    .recommendation-header h2 {
+        font-size: 20px;
+    }
+    
+    .recommendation-header p {
+        font-size: 14px;
+    }
+} 

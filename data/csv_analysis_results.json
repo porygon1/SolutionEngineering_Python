@@ -1,0 +1,1693 @@
+{
+  "analysis_timestamp": "2025-06-16T16:52:59.460986",
+  "files_analyzed": {
+    "spotify_tracks.csv": {
+      "file_info": {
+        "exists": true,
+        "size_mb": 255.85,
+        "size_category": "large"
+      },
+      "total_rows_analyzed": 101939,
+      "total_columns": 32,
+      "columns": [
+        "Unnamed: 0",
+        "acousticness",
+        "album_id",
+        "analysis_url",
+        "artists_id",
+        "available_markets",
+        "country",
+        "danceability",
+        "disc_number",
+        "duration_ms",
+        "energy",
+        "href",
+        "id",
+        "instrumentalness",
+        "key",
+        "liveness",
+        "loudness",
+        "lyrics",
+        "mode",
+        "name",
+        "playlist",
+        "popularity",
+        "preview_url",
+        "speechiness",
+        "tempo",
+        "time_signature",
+        "track_href",
+        "track_name_prev",
+        "track_number",
+        "uri",
+        "valence",
+        "type"
+      ],
+      "column_analysis": {
+        "acousticness": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 0.996,
+          "mean": 0.352123561498249,
+          "std": 0.33485523897742053,
+          "median": 0.238,
+          "q25": 0.0407,
+          "q75": 0.645,
+          "dtype": "float64",
+          "unique_count": 4705,
+          "sample_values": [
+            0.294,
+            0.863,
+            0.75,
+            0.763,
+            0.77,
+            0.971,
+            0.824,
+            0.719,
+            0.752,
+            0.69
+          ],
+          "outlier_analysis": {
+            "outliers_count": 0,
+            "outlier_percentage": 0.0,
+            "outlier_threshold_low": -0.8657500000000001,
+            "outlier_threshold_high": 1.55145,
+            "extreme_outliers": {
+              "min_outlier": null,
+              "max_outlier": null
+            }
+          }
+        },
+        "album_id": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "000f3dTtvpazVzv35NuZmn",
+          "max": "7zzf5q2EpPVUtGbU0C0mal",
+          "mean": null,
+          "std": null,
+          "median": null,
+          "q25": null,
+          "q75": null,
+          "dtype": "object",
+          "unique_count": 75503,
+          "sample_values": [
+            "0D3QufeCudpQANOR7luqdr",
+            "1bcqsH5UyTBzmh9YizdsBE",
+            "4tKijjmxGClg4JOLAyo2qE",
+            "6FeJF5r8roonnKraJxr4oB",
+            "4tKijjmxGClg4JOLAyo2qE",
+            "7CCwkPweMxKq8yWkVerH6T",
+            "51g5viCaYjOW5XO4qX1RCD",
+            "4tKijjmxGClg4JOLAyo2qE",
+            "1UMRkrYSzqH3tH3yCauNOW",
+            "4tKijjmxGClg4JOLAyo2qE"
+          ]
+        },
+        "danceability": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 0.989,
+          "mean": 0.5860150295765115,
+          "std": 0.17772425685883866,
+          "median": 0.61,
+          "q25": 0.48,
+          "q75": 0.714,
+          "dtype": "float64",
+          "unique_count": 1209,
+          "sample_values": [
+            0.698,
+            0.719,
+            0.466,
+            0.719,
+            0.46,
+            0.367,
+            0.688,
+            0.513,
+            0.629,
+            0.529
+          ],
+          "outlier_analysis": {
+            "outliers_count": 1407,
+            "outlier_percentage": 1.3802372006788375,
+            "outlier_threshold_low": 0.129,
+            "outlier_threshold_high": 1.065,
+            "extreme_outliers": {
+              "min_outlier": 0.0,
+              "max_outlier": 0.128
+            }
+          }
+        },
+        "disc_number": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 1.0,
+          "max": 81.0,
+          "mean": 1.0321662955296795,
+          "std": 0.5667887196961546,
+          "median": 1.0,
+          "q25": 1.0,
+          "q75": 1.0,
+          "dtype": "float64",
+          "unique_count": 15,
+          "sample_values": [
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "outlier_analysis": {
+            "outliers_count": 1904,
+            "outlier_percentage": 1.8677836745504666,
+            "outlier_threshold_low": 1.0,
+            "outlier_threshold_high": 1.0,
+            "extreme_outliers": {
+              "min_outlier": 2.0,
+              "max_outlier": 81.0
+            }
+          }
+        },
+        "duration_ms": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 1155.0,
+          "max": 5505831.0,
+          "mean": 246770.80330393667,
+          "std": 190430.29514077443,
+          "median": 216893.0,
+          "q25": 184000.0,
+          "q75": 261055.0,
+          "dtype": "float64",
+          "unique_count": 59045,
+          "sample_values": [
+            235584.0,
+            656960.0,
+            492840.0,
+            316578.0,
+            558880.0,
+            183653.0,
+            29240.0,
+            591160.0,
+            753947.0,
+            573280.0
+          ],
+          "outlier_analysis": {
+            "outliers_count": 8758,
+            "outlier_percentage": 8.59141251140388,
+            "outlier_threshold_low": 68417.5,
+            "outlier_threshold_high": 376637.5,
+            "extreme_outliers": {
+              "min_outlier": 1155.0,
+              "max_outlier": 5505831.0
+            }
+          }
+        },
+        "energy": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 1.0,
+          "mean": 0.5864791632319328,
+          "std": 0.2601704025337212,
+          "median": 0.629,
+          "q25": 0.411,
+          "q75": 0.798,
+          "dtype": "float64",
+          "unique_count": 2357,
+          "sample_values": [
+            0.606,
+            0.308,
+            0.931,
+            0.126,
+            0.942,
+            0.349,
+            0.304,
+            0.889,
+            0.194,
+            0.9
+          ],
+          "outlier_analysis": {
+            "outliers_count": 0,
+            "outlier_percentage": 0.0,
+            "outlier_threshold_low": -0.16950000000000015,
+            "outlier_threshold_high": 1.3785000000000003,
+            "extreme_outliers": {
+              "min_outlier": null,
+              "max_outlier": null
+            }
+          }
+        },
+        "id": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "000RDCYioLteXcutOjeweY",
+          "max": "7zzpno7uAqkAzWZDQuGEFA",
+          "mean": null,
+          "std": null,
+          "median": null,
+          "q25": null,
+          "q75": null,
+          "dtype": "object",
+          "unique_count": 101939,
+          "sample_values": [
+            "5qljLQuKnNJf4F4vfxQB0V",
+            "3VAX2MJdmdqARLSU5hPMpm",
+            "1L3YAhsEMrGVvCgDXj2TYn",
+            "6aCe9zzoZmCojX7bbgKKtf",
+            "1Vo802A38tPFHmje1h91um",
+            "4PrAZpH9Ic7S47E78BN6E4",
+            "1WJzRtI1ABzV3TPIeJZVvi",
+            "6ileHaSaGI8UjUK1jQu6jm",
+            "6rlEcNrUCujtmQK0EDvcp2",
+            "00upOxUCEPl1CMr1axg52f"
+          ]
+        },
+        "instrumentalness": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 1.0,
+          "mean": 0.14877590260086915,
+          "std": 0.3040235636638476,
+          "median": 3.75e-05,
+          "q25": 0.0,
+          "q75": 0.0344,
+          "dtype": "float64",
+          "unique_count": 5375,
+          "sample_values": [
+            2.69e-06,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.296,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "outlier_analysis": {
+            "outliers_count": 22640,
+            "outlier_percentage": 22.209360499906808,
+            "outlier_threshold_low": -0.0516,
+            "outlier_threshold_high": 0.086,
+            "extreme_outliers": {
+              "min_outlier": 0.0861,
+              "max_outlier": 1.0
+            }
+          }
+        },
+        "key": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 11.0,
+          "mean": 5.270858062174438,
+          "std": 3.5776785175269583,
+          "median": 5.0,
+          "q25": 2.0,
+          "q75": 8.0,
+          "dtype": "float64",
+          "unique_count": 12,
+          "sample_values": [
+            10.0,
+            6.0,
+            4.0,
+            3.0,
+            7.0,
+            11.0,
+            10.0,
+            3.0,
+            5.0,
+            5.0
+          ],
+          "outlier_analysis": {
+            "outliers_count": 0,
+            "outlier_percentage": 0.0,
+            "outlier_threshold_low": -7.0,
+            "outlier_threshold_high": 17.0,
+            "extreme_outliers": {
+              "min_outlier": null,
+              "max_outlier": null
+            }
+          }
+        },
+        "liveness": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 0.999,
+          "mean": 0.19764030645778355,
+          "std": 0.17539085924060663,
+          "median": 0.124,
+          "q25": 0.0956,
+          "q75": 0.241,
+          "dtype": "float64",
+          "unique_count": 1718,
+          "sample_values": [
+            0.151,
+            0.253,
+            0.938,
+            0.113,
+            0.917,
+            0.633,
+            0.142,
+            0.722,
+            0.144,
+            0.971
+          ],
+          "outlier_analysis": {
+            "outliers_count": 7886,
+            "outlier_percentage": 7.735998979782026,
+            "outlier_threshold_low": -0.12249999999999996,
+            "outlier_threshold_high": 0.45909999999999995,
+            "extreme_outliers": {
+              "min_outlier": 0.46,
+              "max_outlier": 0.999
+            }
+          }
+        },
+        "mode": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 1.0,
+          "mean": 0.6181539940552684,
+          "std": 0.4858414856826424,
+          "median": 1.0,
+          "q25": 0.0,
+          "q75": 1.0,
+          "dtype": "float64",
+          "unique_count": 2,
+          "sample_values": [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "outlier_analysis": {
+            "outliers_count": 0,
+            "outlier_percentage": 0.0,
+            "outlier_threshold_low": -1.5,
+            "outlier_threshold_high": 2.5,
+            "extreme_outliers": {
+              "min_outlier": null,
+              "max_outlier": null
+            }
+          }
+        },
+        "name": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "! (The Song Formerly Known As)",
+          "max": "\ud754\uc801",
+          "mean": null,
+          "std": null,
+          "median": null,
+          "q25": null,
+          "q75": null,
+          "dtype": "object",
+          "unique_count": 85552,
+          "sample_values": [
+            "Blood",
+            "The Ugly Duckling",
+            "Jimmy Launches His Own Range Of Greetings Cards",
+            "The Crime At Pickets Mill",
+            "Setup + Punchline = Joke",
+            "Already Gone",
+            "Three Blind Mice",
+            "They Made It So Easy",
+            "The Jungle Book: Rikki-Tikki-Tavi",
+            "Applying For A Job, The Jimmy Carr Way"
+          ]
+        },
+        "popularity": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 97.0,
+          "mean": 39.78231098990573,
+          "std": 16.79076949955149,
+          "median": 41.0,
+          "q25": 29.0,
+          "q75": 52.0,
+          "dtype": "float64",
+          "unique_count": 97,
+          "sample_values": [
+            28.0,
+            31.0,
+            31.0,
+            14.0,
+            32.0,
+            45.0,
+            0.0,
+            26.0,
+            17.0,
+            29.0
+          ],
+          "outlier_analysis": {
+            "outliers_count": 83,
+            "outlier_percentage": 0.08142124211538274,
+            "outlier_threshold_low": -5.5,
+            "outlier_threshold_high": 86.5,
+            "extreme_outliers": {
+              "min_outlier": 87.0,
+              "max_outlier": 97.0
+            }
+          }
+        },
+        "speechiness": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 0.969,
+          "mean": 0.12884149638509307,
+          "std": 0.20332371328441765,
+          "median": 0.0506,
+          "q25": 0.0364,
+          "q75": 0.104,
+          "dtype": "float64",
+          "unique_count": 1642,
+          "sample_values": [
+            0.0262,
+            0.922,
+            0.944,
+            0.938,
+            0.943,
+            0.0268,
+            0.531,
+            0.934,
+            0.947,
+            0.938
+          ],
+          "outlier_analysis": {
+            "outliers_count": 14938,
+            "outlier_percentage": 14.653861623127556,
+            "outlier_threshold_low": -0.06499999999999999,
+            "outlier_threshold_high": 0.20539999999999997,
+            "extreme_outliers": {
+              "min_outlier": 0.206,
+              "max_outlier": 0.969
+            }
+          }
+        },
+        "tempo": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 244.035,
+          "mean": 118.35852701125182,
+          "std": 30.224074261994026,
+          "median": 118.067,
+          "q25": 95.973,
+          "q75": 136.045,
+          "dtype": "float64",
+          "unique_count": 52031,
+          "sample_values": [
+            115.018,
+            115.075,
+            79.565,
+            112.822,
+            81.26,
+            81.85,
+            77.056,
+            89.024,
+            85.173,
+            86.335
+          ],
+          "outlier_analysis": {
+            "outliers_count": 1185,
+            "outlier_percentage": 1.1624599024907052,
+            "outlier_threshold_low": 35.865000000000016,
+            "outlier_threshold_high": 196.15299999999996,
+            "extreme_outliers": {
+              "min_outlier": 0.0,
+              "max_outlier": 244.035
+            }
+          }
+        },
+        "time_signature": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 5.0,
+          "mean": 3.875651124692218,
+          "std": 0.5170080411452667,
+          "median": 4.0,
+          "q25": 4.0,
+          "q75": 4.0,
+          "dtype": "float64",
+          "unique_count": 5,
+          "sample_values": [
+            4.0,
+            3.0,
+            4.0,
+            3.0,
+            4.0,
+            4.0,
+            3.0,
+            4.0,
+            4.0,
+            4.0
+          ],
+          "outlier_analysis": {
+            "outliers_count": 13919,
+            "outlier_percentage": 13.654244204867616,
+            "outlier_threshold_low": 4.0,
+            "outlier_threshold_high": 4.0,
+            "extreme_outliers": {
+              "min_outlier": 0.0,
+              "max_outlier": 5.0
+            }
+          }
+        },
+        "track_number": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 1.0,
+          "max": 655.0,
+          "mean": 4.608059721990602,
+          "std": 7.18180453711403,
+          "median": 2.0,
+          "q25": 1.0,
+          "q75": 6.0,
+          "dtype": "float64",
+          "unique_count": 119,
+          "sample_values": [
+            1.0,
+            3.0,
+            4.0,
+            1.0,
+            2.0,
+            8.0,
+            2.0,
+            11.0,
+            6.0,
+            6.0
+          ],
+          "outlier_analysis": {
+            "outliers_count": 6507,
+            "outlier_percentage": 6.383229186081872,
+            "outlier_threshold_low": -6.5,
+            "outlier_threshold_high": 13.5,
+            "extreme_outliers": {
+              "min_outlier": 14.0,
+              "max_outlier": 655.0
+            }
+          }
+        },
+        "valence": {
+          "count": 101939,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 0.993,
+          "mean": 0.4828126257801234,
+          "std": 0.2616904844759437,
+          "median": 0.477,
+          "q25": 0.271,
+          "q75": 0.693,
+          "dtype": "float64",
+          "unique_count": 1781,
+          "sample_values": [
+            0.622,
+            0.589,
+            0.085,
+            0.533,
+            0.0906,
+            0.192,
+            0.414,
+            0.228,
+            0.483,
+            0.214
+          ],
+          "outlier_analysis": {
+            "outliers_count": 0,
+            "outlier_percentage": 0.0,
+            "outlier_threshold_low": -0.3619999999999999,
+            "outlier_threshold_high": 1.3259999999999998,
+            "extreme_outliers": {
+              "min_outlier": null,
+              "max_outlier": null
+            }
+          }
+        }
+      }
+    },
+    "spotify_artists.csv": {
+      "file_info": {
+        "exists": true,
+        "size_mb": 6.22,
+        "size_category": "small"
+      },
+      "total_rows_analyzed": 56129,
+      "total_columns": 9,
+      "columns": [
+        "Unnamed: 0",
+        "artist_popularity",
+        "followers",
+        "genres",
+        "id",
+        "name",
+        "track_id",
+        "track_name_prev",
+        "type"
+      ],
+      "column_analysis": {
+        "followers": {
+          "count": 56129,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "0",
+          "max": "41561693",
+          "mean": 77960.41479449125,
+          "std": 594227.3097809409,
+          "median": 1734.0,
+          "q25": 182.0,
+          "q75": 15203.0,
+          "dtype": "int64",
+          "unique_count": 22735,
+          "sample_values": [
+            23230,
+            313,
+            1596,
+            149,
+            11,
+            81,
+            8358,
+            158,
+            30,
+            992
+          ],
+          "outlier_analysis": {
+            "outliers_count": 9183,
+            "outlier_percentage": 16.36052664398083,
+            "outlier_threshold_low": -22349.5,
+            "outlier_threshold_high": 37734.5,
+            "extreme_outliers": {
+              "min_outlier": "37741",
+              "max_outlier": "41561693"
+            }
+          }
+        },
+        "id": {
+          "count": 56129,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "0027wHZDQXpRll4ckwDGad",
+          "max": "7zyObVag8rUjItn71SkIrh",
+          "mean": null,
+          "std": null,
+          "median": null,
+          "q25": null,
+          "q75": null,
+          "dtype": "object",
+          "unique_count": 56129,
+          "sample_values": [
+            "4mGnpjhqgx4RUdsIJiURdo",
+            "1dLnVku4VQUOLswwDFvRc9",
+            "6YVY310fjfUzKi8hiqR7iK",
+            "2VElyouiCfoYPDJluzwJwK",
+            "4agVy03qW8juSysCTUOuDI",
+            "38VBjthd0szbS6wpDMafrb",
+            "36mHwYa65L0WZbAXY2iSGw",
+            "1jJyy00XfxjB4tMAv5OT0q",
+            "10A8WbBJ0zW8MnvTsUL6os",
+            "5ijoPCUhV0dW8EJ7aPGvXK"
+          ]
+        },
+        "name": {
+          "count": 56128,
+          "null_count": "1",
+          "null_percentage": 0.001781610219316218,
+          "min": "!!!",
+          "max": "\ud64d\ud06c Honk",
+          "mean": null,
+          "std": null,
+          "median": null,
+          "q25": null,
+          "q75": null,
+          "dtype": "object",
+          "unique_count": 55505,
+          "sample_values": [
+            "Juliano Cezar",
+            "The Grenadines",
+            "Gangway",
+            "FADES",
+            "Jean-Pierre Guignon",
+            "Filhos",
+            "Eloq",
+            "Frav\u00e6r",
+            "Camille P\u00e9pin",
+            "Pepe Willberg & The Paradise"
+          ]
+        }
+      }
+    },
+    "spotify_albums.csv": {
+      "file_info": {
+        "exists": true,
+        "size_mb": 75.81,
+        "size_category": "medium"
+      },
+      "total_rows_analyzed": 75511,
+      "total_columns": 16,
+      "columns": [
+        "Unnamed: 0",
+        "album_type",
+        "artist_id",
+        "available_markets",
+        "external_urls",
+        "href",
+        "id",
+        "images",
+        "name",
+        "release_date",
+        "release_date_precision",
+        "total_tracks",
+        "track_id",
+        "track_name_prev",
+        "uri",
+        "type"
+      ],
+      "column_analysis": {
+        "artist_id": {
+          "count": 75511,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "0027wHZDQXpRll4ckwDGad",
+          "max": "7zyObVag8rUjItn71SkIrh",
+          "mean": null,
+          "std": null,
+          "median": null,
+          "q25": null,
+          "q75": null,
+          "dtype": "object",
+          "unique_count": 39057,
+          "sample_values": [
+            "3DiDSECUqqY1AuBP8qtaIa",
+            "6s1pCNXcbdtQJlsnM1hRIA",
+            "5YjfNaHq05WrwldRe1QSBc",
+            "2G9Vc16JCpnZmK4uGH46Fa",
+            "2dwM9OcE4c3Ph1UBINSodx",
+            "6bwXuNL4AuC7w3AxspKXn6",
+            "5y9NnD1AZPcBVbDluRgiXS",
+            "0W03t1E2FUo9WAMBwhntuL",
+            "7GRrLcUxwtQLvOpO7OHO80",
+            "5j1NzKToU6ZSzCkuINpFbj"
+          ]
+        },
+        "id": {
+          "count": 75511,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "000f3dTtvpazVzv35NuZmn",
+          "max": "7zzf5q2EpPVUtGbU0C0mal",
+          "mean": null,
+          "std": null,
+          "median": null,
+          "q25": null,
+          "q75": null,
+          "dtype": "object",
+          "unique_count": 75511,
+          "sample_values": [
+            "1gAM7M4rBwEbSPeAQR2nx1",
+            "4KfJZV7WfolYlxBzOTo66s",
+            "7nLYY7uAVUb57kpd7tZxnS",
+            "6p20Rt4x2Qn5mUMRi1s6pj",
+            "1XeoOqC1q7U2iyLEQJ64cu",
+            "0LFnBypmyPreoqgByBxtE7",
+            "4ozx3bix6xomjtvIlDTYgU",
+            "5mwUwmTB5dvONIX8UxMimr",
+            "2BlcdDBE62JOtVOgC3L3xo",
+            "2WYcjaqZ159ruiClrGqyQF"
+          ]
+        },
+        "name": {
+          "count": 75511,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "! (Exclamation Mark)",
+          "max": "\ud22c\uae5d\uc2a4, Pt. 2 Original Television Soundtrack",
+          "mean": null,
+          "std": null,
+          "median": null,
+          "q25": null,
+          "q75": null,
+          "dtype": "object",
+          "unique_count": 66627,
+          "sample_values": [
+            "If I Ain't Got You EP",
+            "Shostakovich Symphony No.5 - Four Romances on Poems by Pushkin",
+            "Take My Bass",
+            "Hypnotizing (Are U)",
+            "Sunshine",
+            "Moderniste - Sonata for Flute, Oboe, Clarinet & Piano, Op. 47: II. Joyeux",
+            "An Enduring Voice",
+            "Quiet",
+            "High Visceral, Pt. 1",
+            "Aut\u00e9ntica Llanera"
+          ]
+        },
+        "total_tracks": {
+          "count": 75511,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "1",
+          "max": "977",
+          "mean": 8.235806703659069,
+          "std": 11.66981127144052,
+          "median": 5.0,
+          "q25": 1.0,
+          "q75": 12.0,
+          "dtype": "int64",
+          "unique_count": 155,
+          "sample_values": [
+            6,
+            8,
+            1,
+            1,
+            1,
+            1,
+            11,
+            1,
+            10,
+            1
+          ],
+          "outlier_analysis": {
+            "outliers_count": 2543,
+            "outlier_percentage": 3.3677212591542953,
+            "outlier_threshold_low": -15.5,
+            "outlier_threshold_high": 28.5,
+            "extreme_outliers": {
+              "min_outlier": "29",
+              "max_outlier": "977"
+            }
+          }
+        }
+      }
+    },
+    "low_level_audio_features.csv": {
+      "file_info": {
+        "exists": true,
+        "size_mb": 393.92,
+        "size_category": "large"
+      },
+      "total_rows_analyzed": 101909,
+      "total_columns": 209,
+      "columns": [
+        "Unnamed: 0",
+        "Chroma_1",
+        "Chroma_10",
+        "Chroma_11",
+        "Chroma_12",
+        "Chroma_2",
+        "Chroma_3",
+        "Chroma_4",
+        "Chroma_5",
+        "Chroma_6",
+        "Chroma_7",
+        "Chroma_8",
+        "Chroma_9",
+        "MEL_1",
+        "MEL_10",
+        "MEL_100",
+        "MEL_101",
+        "MEL_102",
+        "MEL_103",
+        "MEL_104",
+        "MEL_105",
+        "MEL_106",
+        "MEL_107",
+        "MEL_108",
+        "MEL_109",
+        "MEL_11",
+        "MEL_110",
+        "MEL_111",
+        "MEL_112",
+        "MEL_113",
+        "MEL_114",
+        "MEL_115",
+        "MEL_116",
+        "MEL_117",
+        "MEL_118",
+        "MEL_119",
+        "MEL_12",
+        "MEL_120",
+        "MEL_121",
+        "MEL_122",
+        "MEL_123",
+        "MEL_124",
+        "MEL_125",
+        "MEL_126",
+        "MEL_127",
+        "MEL_128",
+        "MEL_13",
+        "MEL_14",
+        "MEL_15",
+        "MEL_16",
+        "MEL_17",
+        "MEL_18",
+        "MEL_19",
+        "MEL_2",
+        "MEL_20",
+        "MEL_21",
+        "MEL_22",
+        "MEL_23",
+        "MEL_24",
+        "MEL_25",
+        "MEL_26",
+        "MEL_27",
+        "MEL_28",
+        "MEL_29",
+        "MEL_3",
+        "MEL_30",
+        "MEL_31",
+        "MEL_32",
+        "MEL_33",
+        "MEL_34",
+        "MEL_35",
+        "MEL_36",
+        "MEL_37",
+        "MEL_38",
+        "MEL_39",
+        "MEL_4",
+        "MEL_40",
+        "MEL_41",
+        "MEL_42",
+        "MEL_43",
+        "MEL_44",
+        "MEL_45",
+        "MEL_46",
+        "MEL_47",
+        "MEL_48",
+        "MEL_49",
+        "MEL_5",
+        "MEL_50",
+        "MEL_51",
+        "MEL_52",
+        "MEL_53",
+        "MEL_54",
+        "MEL_55",
+        "MEL_56",
+        "MEL_57",
+        "MEL_58",
+        "MEL_59",
+        "MEL_6",
+        "MEL_60",
+        "MEL_61",
+        "MEL_62",
+        "MEL_63",
+        "MEL_64",
+        "MEL_65",
+        "MEL_66",
+        "MEL_67",
+        "MEL_68",
+        "MEL_69",
+        "MEL_7",
+        "MEL_70",
+        "MEL_71",
+        "MEL_72",
+        "MEL_73",
+        "MEL_74",
+        "MEL_75",
+        "MEL_76",
+        "MEL_77",
+        "MEL_78",
+        "MEL_79",
+        "MEL_8",
+        "MEL_80",
+        "MEL_81",
+        "MEL_82",
+        "MEL_83",
+        "MEL_84",
+        "MEL_85",
+        "MEL_86",
+        "MEL_87",
+        "MEL_88",
+        "MEL_89",
+        "MEL_9",
+        "MEL_90",
+        "MEL_91",
+        "MEL_92",
+        "MEL_93",
+        "MEL_94",
+        "MEL_95",
+        "MEL_96",
+        "MEL_97",
+        "MEL_98",
+        "MEL_99",
+        "MFCC_1",
+        "MFCC_10",
+        "MFCC_11",
+        "MFCC_12",
+        "MFCC_13",
+        "MFCC_14",
+        "MFCC_15",
+        "MFCC_16",
+        "MFCC_17",
+        "MFCC_18",
+        "MFCC_19",
+        "MFCC_2",
+        "MFCC_20",
+        "MFCC_21",
+        "MFCC_22",
+        "MFCC_23",
+        "MFCC_24",
+        "MFCC_25",
+        "MFCC_26",
+        "MFCC_27",
+        "MFCC_28",
+        "MFCC_29",
+        "MFCC_3",
+        "MFCC_30",
+        "MFCC_31",
+        "MFCC_32",
+        "MFCC_33",
+        "MFCC_34",
+        "MFCC_35",
+        "MFCC_36",
+        "MFCC_37",
+        "MFCC_38",
+        "MFCC_39",
+        "MFCC_4",
+        "MFCC_40",
+        "MFCC_41",
+        "MFCC_42",
+        "MFCC_43",
+        "MFCC_44",
+        "MFCC_45",
+        "MFCC_46",
+        "MFCC_47",
+        "MFCC_48",
+        "MFCC_5",
+        "MFCC_6",
+        "MFCC_7",
+        "MFCC_8",
+        "MFCC_9",
+        "Spectral_contrast_1",
+        "Spectral_contrast_2",
+        "Spectral_contrast_3",
+        "Spectral_contrast_4",
+        "Spectral_contrast_5",
+        "Spectral_contrast_6",
+        "Spectral_contrast_7",
+        "Tonnetz_1",
+        "Tonnetz_2",
+        "Tonnetz_3",
+        "Tonnetz_4",
+        "Tonnetz_5",
+        "Tonnetz_6",
+        "ZCR",
+        "entropy_energy",
+        "spectral_bandwith",
+        "spectral_centroid",
+        "spectral_rollOff_max",
+        "spectral_rollOff_min",
+        "track_id"
+      ],
+      "column_analysis": {
+        "entropy_energy": {
+          "count": 101909,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": -352.52045288116227,
+          "max": -0.0038088202155647,
+          "mean": -159.72172937008338,
+          "std": 51.032579525865245,
+          "median": -160.96363703886755,
+          "q25": -194.16195811621844,
+          "q75": -127.6649556576162,
+          "dtype": "float64",
+          "unique_count": 99689,
+          "sample_values": [
+            -89.11338908198326,
+            -127.94523898515972,
+            -238.28517593179728,
+            -148.78573278295062,
+            -176.618314199146,
+            -138.73729738454983,
+            -73.53095649078132,
+            -145.63246923518332,
+            -226.18570572330503,
+            -189.8852889124897
+          ],
+          "outlier_analysis": {
+            "outliers_count": 1040,
+            "outlier_percentage": 1.0205183055471059,
+            "outlier_threshold_low": -293.9074618041218,
+            "outlier_threshold_high": -27.919451969712853,
+            "extreme_outliers": {
+              "min_outlier": -352.52045288116227,
+              "max_outlier": -0.0038088202155647
+            }
+          }
+        },
+        "spectral_centroid": {
+          "count": 101909,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": 0.0,
+          "max": 11025.000008693563,
+          "mean": 2702.7287802975748,
+          "std": 1219.4171504099054,
+          "median": 2490.4690079264656,
+          "q25": 1887.6787375689944,
+          "q75": 3252.2576933473874,
+          "dtype": "float64",
+          "unique_count": 99614,
+          "sample_values": [
+            3558.4007062529986,
+            1499.6895903380237,
+            1543.5500337814294,
+            3017.248823924134,
+            2118.6869915890834,
+            1359.6087697119278,
+            1014.6407250213016,
+            2532.356349788315,
+            1385.8581361682518,
+            2005.8170258829389
+          ],
+          "outlier_analysis": {
+            "outliers_count": 3950,
+            "outlier_percentage": 3.876007025876026,
+            "outlier_threshold_low": -159.18969609859528,
+            "outlier_threshold_high": 5299.126127014977,
+            "extreme_outliers": {
+              "min_outlier": 5299.192538558579,
+              "max_outlier": 11025.000008693563
+            }
+          }
+        },
+        "track_id": {
+          "count": 101909,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "000RDCYioLteXcutOjeweY",
+          "max": "7zzpno7uAqkAzWZDQuGEFA",
+          "mean": null,
+          "std": null,
+          "median": null,
+          "q25": null,
+          "q75": null,
+          "dtype": "object",
+          "unique_count": 101909,
+          "sample_values": [
+            "19YEk4OVQZn3GfoxbpNrU6",
+            "6zJms3MX11Qu1IKF44LoRW",
+            "1WugzepXsLjnsM0K4UaWYc",
+            "1pSlTbCrUJ9rmwj5CNNrX4",
+            "5yruvWJs3mL00w4slpCVzN",
+            "6KCwYM1Q4CME1xsmXG0A2D",
+            "1npoHoB0q94QL3kPN3O2Se",
+            "53CrYbG0BaY5tQFL2RM9wR",
+            "0DRp685EnPxbJsF3tsZlC4",
+            "7h4XA0Kz2YCKAJNYSdJVdd"
+          ]
+        }
+      }
+    },
+    "lyrics_features.csv": {
+      "file_info": {
+        "exists": true,
+        "size_mb": 6.21,
+        "size_category": "small"
+      },
+      "total_rows_analyzed": 94954,
+      "total_columns": 8,
+      "columns": [
+        "Unnamed: 0",
+        "mean_syllables_word",
+        "mean_words_sentence",
+        "n_sentences",
+        "n_words",
+        "sentence_similarity",
+        "track_id",
+        "vocabulary_wealth"
+      ],
+      "column_analysis": {
+        "mean_syllables_word": {
+          "count": 94954,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": -1.0,
+          "max": 4.0,
+          "mean": 1.0544480485287613,
+          "std": 0.968959821173258,
+          "median": 1.27,
+          "q25": 1.15,
+          "q75": 1.52,
+          "dtype": "float64",
+          "unique_count": 178,
+          "sample_values": [
+            -1.0,
+            1.1,
+            1.37,
+            1.95,
+            1.16,
+            1.32,
+            1.24,
+            1.32,
+            1.16,
+            1.86
+          ],
+          "outlier_analysis": {
+            "outliers_count": 20183,
+            "outlier_percentage": 21.255555321524106,
+            "outlier_threshold_low": 0.5949999999999998,
+            "outlier_threshold_high": 2.075,
+            "extreme_outliers": {
+              "min_outlier": -1.0,
+              "max_outlier": 4.0
+            }
+          }
+        },
+        "mean_words_sentence": {
+          "count": 94954,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": -1.0,
+          "max": 819.2,
+          "mean": 3.590285927922994,
+          "std": 9.63229377986789,
+          "median": 3.29,
+          "q25": 2.57,
+          "q75": 4.0,
+          "dtype": "float64",
+          "unique_count": 923,
+          "sample_values": [
+            -1.0,
+            5.65,
+            4.77,
+            3.38,
+            2.99,
+            4.21,
+            2.98,
+            3.44,
+            3.11,
+            2.94
+          ],
+          "outlier_analysis": {
+            "outliers_count": 18347,
+            "outlier_percentage": 19.32198748867873,
+            "outlier_threshold_low": 0.4249999999999994,
+            "outlier_threshold_high": 6.1450000000000005,
+            "extreme_outliers": {
+              "min_outlier": -1.0,
+              "max_outlier": 819.2
+            }
+          }
+        },
+        "n_sentences": {
+          "count": 94954,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "-1",
+          "max": "2519",
+          "mean": 42.94964930387346,
+          "std": 45.00147617668273,
+          "median": 41.0,
+          "q25": 22.0,
+          "q75": 59.0,
+          "dtype": "int64",
+          "unique_count": 269,
+          "sample_values": [
+            -1,
+            31,
+            74,
+            72,
+            68,
+            39,
+            50,
+            86,
+            38,
+            34
+          ],
+          "outlier_analysis": {
+            "outliers_count": 1938,
+            "outlier_percentage": 2.040988268003454,
+            "outlier_threshold_low": -33.5,
+            "outlier_threshold_high": 114.5,
+            "extreme_outliers": {
+              "min_outlier": "115",
+              "max_outlier": "2519"
+            }
+          }
+        },
+        "n_words": {
+          "count": 94954,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "-1",
+          "max": "39111",
+          "mean": 316.90199465004105,
+          "std": 871.5112672565917,
+          "median": 238.0,
+          "q25": 125.0,
+          "q75": 356.0,
+          "dtype": "int64",
+          "unique_count": 1284,
+          "sample_values": [
+            -1,
+            326,
+            532,
+            430,
+            368,
+            256,
+            287,
+            524,
+            194,
+            187
+          ],
+          "outlier_analysis": {
+            "outliers_count": 3446,
+            "outlier_percentage": 3.629125681909135,
+            "outlier_threshold_low": -221.5,
+            "outlier_threshold_high": 702.5,
+            "extreme_outliers": {
+              "min_outlier": "703",
+              "max_outlier": "39111"
+            }
+          }
+        },
+        "sentence_similarity": {
+          "count": 94954,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": -1.0,
+          "max": 0.9642857142857144,
+          "mean": -0.11432676017556159,
+          "std": 0.3960674867884549,
+          "median": 0.0352941176470588,
+          "q25": 0.0086580086580086,
+          "q75": 0.0662878787878787,
+          "dtype": "float64",
+          "unique_count": 12498,
+          "sample_values": [
+            -1.0,
+            0.043010752688172,
+            0.0503517215845982,
+            0.0285602503912363,
+            0.0478489903424056,
+            0.0404858299595141,
+            0.0383673469387755,
+            0.0500683994528043,
+            0.0839260312944523,
+            0.0481283422459893
+          ],
+          "outlier_analysis": {
+            "outliers_count": 20225,
+            "outlier_percentage": 21.299787265412725,
+            "outlier_threshold_low": -0.07778679653679656,
+            "outlier_threshold_high": 0.15273268398268386,
+            "extreme_outliers": {
+              "min_outlier": -1.0,
+              "max_outlier": 0.9642857142857144
+            }
+          }
+        },
+        "track_id": {
+          "count": 94954,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": "001O0fWr1NyU700N1XzN5r",
+          "max": "7zzpno7uAqkAzWZDQuGEFA",
+          "mean": null,
+          "std": null,
+          "median": null,
+          "q25": null,
+          "q75": null,
+          "dtype": "object",
+          "unique_count": 94954,
+          "sample_values": [
+            "5KIfHjHI5NIsPHNt58qua0",
+            "13keyz9ikBe6ZpRasw7l4X",
+            "1WugzepXsLjnsM0K4UaWYc",
+            "2MO6oEAlMKcsfI8xP3yoy8",
+            "1i4St7fmSUE9nB3R9n8fol",
+            "3UyfvY3Gs6d4wvq8O4ANqQ",
+            "2zhk0kypGeOPsaaZcjyc14",
+            "3pjampEJWz0wJuiFYyzX0x",
+            "3xBGFVU2b2PV556Q3ebsQH",
+            "4JbTcgrkSwBieKJ8GInB02"
+          ]
+        },
+        "vocabulary_wealth": {
+          "count": 94954,
+          "null_count": "0",
+          "null_percentage": 0.0,
+          "min": -1.0,
+          "max": 0.78,
+          "mean": 0.3026707668976557,
+          "std": 0.5865383926587702,
+          "median": 0.54,
+          "q25": 0.4,
+          "q75": 0.63,
+          "dtype": "float64",
+          "unique_count": 74,
+          "sample_values": [
+            -1.0,
+            0.45,
+            0.59,
+            0.49,
+            0.47,
+            0.6,
+            0.49,
+            0.59,
+            0.58,
+            0.62
+          ],
+          "outlier_analysis": {
+            "outliers_count": 16009,
+            "outlier_percentage": 16.859742612212226,
+            "outlier_threshold_low": 0.05500000000000005,
+            "outlier_threshold_high": 0.975,
+            "extreme_outliers": {
+              "min_outlier": -1.0,
+              "max_outlier": 0.0
+            }
+          }
+        }
+      }
+    }
+  },
+  "constraint_suggestions": {
+    "spotify_tracks.csv": {
+      "file": "spotify_tracks.csv",
+      "constraint_suggestions": {
+        "popularity": {
+          "current_constraint": "CHECK (popularity >= 0 AND popularity <= 100)",
+          "data_driven_constraint": "CHECK (popularity >= 0 AND popularity <= 100)",
+          "issues": []
+        },
+        "tempo": {
+          "current_constraint": "CHECK (tempo > 0)",
+          "data_driven_constraint": "CHECK (tempo > 0 AND tempo <= 196.2)",
+          "issues": [
+            "Invalid tempo values (min: 0.0)"
+          ]
+        },
+        "energy": {
+          "current_constraint": "CHECK (energy >= 0 AND energy <= 1)",
+          "data_driven_constraint": "CHECK (energy >= 0 AND energy <= 1)",
+          "issues": []
+        },
+        "valence": {
+          "current_constraint": "CHECK (valence >= 0 AND valence <= 1)",
+          "data_driven_constraint": "CHECK (valence >= 0 AND valence <= 1)",
+          "issues": []
+        },
+        "danceability": {
+          "current_constraint": "CHECK (danceability >= 0 AND danceability <= 1)",
+          "data_driven_constraint": "CHECK (danceability >= 0 AND danceability <= 1)",
+          "issues": []
+        },
+        "acousticness": {
+          "current_constraint": "CHECK (acousticness >= 0 AND acousticness <= 1)",
+          "data_driven_constraint": "CHECK (acousticness >= 0 AND acousticness <= 1)",
+          "issues": []
+        },
+        "instrumentalness": {
+          "current_constraint": "CHECK (instrumentalness >= 0 AND instrumentalness <= 1)",
+          "data_driven_constraint": "CHECK (instrumentalness >= 0 AND instrumentalness <= 1)",
+          "issues": []
+        },
+        "liveness": {
+          "current_constraint": "CHECK (liveness >= 0 AND liveness <= 1)",
+          "data_driven_constraint": "CHECK (liveness >= 0 AND liveness <= 1)",
+          "issues": []
+        },
+        "speechiness": {
+          "current_constraint": "CHECK (speechiness >= 0 AND speechiness <= 1)",
+          "data_driven_constraint": "CHECK (speechiness >= 0 AND speechiness <= 1)",
+          "issues": []
+        },
+        "key": {
+          "current_constraint": "CHECK (key >= 0 AND key <= 11)",
+          "data_driven_constraint": "CHECK (key >= 0 AND key <= 11)",
+          "issues": []
+        },
+        "mode": {
+          "current_constraint": "CHECK (mode >= 0 AND mode <= 1)",
+          "data_driven_constraint": "CHECK (mode >= 0 AND mode <= 1)",
+          "issues": []
+        },
+        "time_signature": {
+          "current_constraint": "CHECK (time_signature >= 1 AND time_signature <= 7)",
+          "data_driven_constraint": "CHECK (time_signature >= 1 AND time_signature <= 7)",
+          "issues": [
+            "Time signature outside 1-7 range: 0.0 to 5.0"
+          ]
+        },
+        "duration_ms": {
+          "current_constraint": "CHECK (duration_ms > 0)",
+          "data_driven_constraint": "CHECK (duration_ms > 0)",
+          "issues": []
+        },
+        "track_number": {
+          "current_constraint": "CHECK (track_number > 0)",
+          "data_driven_constraint": "CHECK (track_number > 0)",
+          "issues": []
+        },
+        "disc_number": {
+          "current_constraint": "CHECK (disc_number > 0)",
+          "data_driven_constraint": "CHECK (disc_number > 0)",
+          "issues": []
+        }
+      },
+      "data_quality_issues": [],
+      "recommendations": []
+    },
+    "spotify_artists.csv": {
+      "file": "spotify_artists.csv",
+      "constraint_suggestions": {
+        "followers": {
+          "current_constraint": "CHECK (followers >= 0)",
+          "data_driven_constraint": "CHECK (followers >= 0)",
+          "issues": []
+        }
+      },
+      "data_quality_issues": [],
+      "recommendations": []
+    },
+    "spotify_albums.csv": {
+      "file": "spotify_albums.csv",
+      "constraint_suggestions": {
+        "total_tracks": {
+          "current_constraint": "CHECK (total_tracks > 0)",
+          "data_driven_constraint": "CHECK (total_tracks > 0)",
+          "issues": []
+        }
+      },
+      "data_quality_issues": [],
+      "recommendations": []
+    },
+    "low_level_audio_features.csv": {
+      "file": "low_level_audio_features.csv",
+      "constraint_suggestions": {
+        "spectral_centroid": {
+          "current_constraint": "No current constraint",
+          "data_driven_constraint": null,
+          "issues": []
+        },
+        "entropy_energy": {
+          "current_constraint": "No current constraint",
+          "data_driven_constraint": null,
+          "issues": []
+        }
+      },
+      "data_quality_issues": [],
+      "recommendations": []
+    },
+    "lyrics_features.csv": {
+      "file": "lyrics_features.csv",
+      "constraint_suggestions": {
+        "mean_syllables_word": {
+          "current_constraint": "CHECK (mean_syllables_word > 0)",
+          "data_driven_constraint": null,
+          "issues": []
+        },
+        "mean_words_sentence": {
+          "current_constraint": "CHECK (mean_words_sentence > 0)",
+          "data_driven_constraint": null,
+          "issues": []
+        },
+        "n_sentences": {
+          "current_constraint": "CHECK (n_sentences >= 0)",
+          "data_driven_constraint": null,
+          "issues": [
+            "Found negative values (min: -1)"
+          ]
+        },
+        "n_words": {
+          "current_constraint": "CHECK (n_words >= 0)",
+          "data_driven_constraint": null,
+          "issues": [
+            "Found negative values (min: -1)"
+          ]
+        },
+        "sentence_similarity": {
+          "current_constraint": "CHECK (sentence_similarity >= 0 AND sentence_similarity <= 1)",
+          "data_driven_constraint": "CHECK (sentence_similarity >= 0 AND sentence_similarity <= 1)",
+          "issues": [
+            "Audio feature outside 0-1 range: -1.0 to 0.9642857142857144"
+          ]
+        },
+        "vocabulary_wealth": {
+          "current_constraint": "CHECK (vocabulary_wealth >= 0 AND vocabulary_wealth <= 1)",
+          "data_driven_constraint": "CHECK (vocabulary_wealth >= 0 AND vocabulary_wealth <= 1)",
+          "issues": [
+            "Audio feature outside 0-1 range: -1.0 to 0.78"
+          ]
+        }
+      },
+      "data_quality_issues": [],
+      "recommendations": []
+    }
+  },
+  "summary": {
+    "total_files": 5,
+    "successful_analyses": 5,
+    "failed_analyses": 0,
+    "total_constraint_issues": 6,
+    "recommendations": [
+      "Found 6 constraint violations across all files",
+      "Consider implementing data cleaning pipeline before import",
+      "Use chunked processing for large files (>100MB)",
+      "Consider partitioning tables by artist_id or time period",
+      "Implement proper indexing strategy for foreign keys",
+      "Implement strict data validation in import pipeline",
+      "Add logging for constraint violations during import"
+    ]
+  }
+}

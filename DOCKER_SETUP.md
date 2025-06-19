@@ -1,458 +1,578 @@
-# �� Docker Setup Guide - Spotify Music Recommendation
+# 🐳 Docker Setup Guide - Spotify Music Recommendation System v2
 
-This guide covers containerized deployment of the **Spotify Music Recommendation** system using Docker and Docker Compose.
+**Complete Docker deployment guide for production-ready music recommendation system**
+
+## 🎯 Overview
+
+This guide covers containerized deployment using Docker Compose with:
+- **Multi-service architecture** (PostgreSQL, FastAPI, React, PgAdmin)
+- **Development and production** configurations
+- **Data persistence** and volume management
+- **Environment customization** and scaling
+- **Health monitoring** and logging
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker 20.10+ and Docker Compose 2.0+
-- Spotify dataset files in `data/raw/`
-- Trained models in `data/models/`
-- *(Optional)* Spotify API credentials for enhanced features
+- **Docker Desktop** 4.0+ installed and running
+- **8GB+ RAM** allocated to Docker
+- **20GB+ disk space** available
 
-### 1. Basic Deployment
-
+### One-Command Setup
 ```bash
-# Clone the repository
+# Clone and navigate
 git clone <your-repo-url>
-cd spotify-music-recommendation
+cd spotify-recommendation-system/spotify_recommendation_system_v2
 
-# Start the application
-docker-compose up -d
+# Complete setup with data import
+docker-compose --profile setup up --build
 
-# Access the Spotify Music Recommendation system
-open http://localhost:8501
+# Or just start the application (after initial setup)
+docker-compose up --build
 ```
 
-### 2. Enhanced Deployment with Spotify API
+### Access Applications
+- **🌐 Frontend**: http://localhost:3000
+- **🔧 API**: http://localhost:8000
+- **📊 API Docs**: http://localhost:8000/docs
+- **🗄️ PgAdmin**: http://localhost:5050 (admin@spotify.local / admin_password)
 
-For full features including album artwork, enhanced track information, and rich media:
+## 🏗️ Docker Architecture
 
-```bash
-# Copy environment template
-cp .env.template .env
-
-# Edit .env with your Spotify credentials
-# Get credentials from: https://developer.spotify.com/dashboard/applications
-nano .env
-
-# Start with enhanced features
-docker-compose up -d
+```mermaid
+graph TB
+    subgraph "🐳 Docker Compose Services"
+        subgraph "💾 Data Layer"
+            A[PostgreSQL 15<br/>Database] --> B[Volume: postgres_data<br/>Persistent Storage]
+        end
+        
+        subgraph "⚙️ Backend Layer"
+            C[FastAPI Backend<br/>Python 3.11] --> A
+            D[Model Prep<br/>ML Training] --> E[Volume: models<br/>Shared Models]
+        end
+        
+        subgraph "🌐 Frontend Layer"
+            F[React Frontend<br/>Node 18] --> C
+            G[Nginx<br/>Production] --> F
+        end
+        
+        subgraph "🛠️ Admin Layer"
+            H[PgAdmin<br/>Database Admin] --> A
+        end
+    end
+    
+    subgraph "📁 Host Volumes"
+        I[./data/raw] --> C
+        E --> J[./data/models]
+        K[./logs] --> C
+    end
 ```
 
-## 🔧 Configuration
+## 📦 Service Overview
+
+### Core Services (Always Running)
+| Service | Description | Port | Purpose |
+|---------|-------------|------|---------|
+| `database` | PostgreSQL 15 | 5432 | Data storage and relationships |
+| `backend` | FastAPI application | 8000 | API endpoints and ML services |
+| `frontend` | React development | 3000 | User interface |
+| `pgadmin` | Database admin | 5050 | Database management UI |
+
+### Setup Services (Profile: setup)
+| Service | Description | Purpose |
+|---------|-------------|---------|
+| `model-prep` | ML model training | Prepares HDBSCAN and KNN models |
+| `data-import` | Database population | Imports CSV data to PostgreSQL |
+
+## 🔧 Docker Compose Configuration
+
+### docker-compose.yml Structure
+```yaml
+services:
+  database:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: spotify_recommendations
+      POSTGRES_USER: spotify_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spotify_user"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://spotify_user:${POSTGRES_PASSWORD:-secure_password}@database:5432/spotify_recommendations
+    volumes:
+      - ../data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@spotify.local
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+    ports:
+      - "5050:80"
+    depends_on:
+      - database
+
+  model-prep:
+    build: ./model-prep
+    profiles: ["setup"]
+    volumes:
+      - ../data:/app/data
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+```
+
+## 🛠️ Environment Configuration
 
 ### Environment Variables
+Create a `.env` file for customization:
 
-The Spotify Music Recommendation system supports the following environment variables:
-
-#### Enhanced Features
 ```bash
-SPOTIFY_CLIENT_ID=your_client_id_here
-SPOTIFY_CLIENT_SECRET=your_client_secret_here
-```
+# Database Configuration
+POSTGRES_DB=spotify_recommendations
+POSTGRES_USER=spotify_user
+POSTGRES_PASSWORD=your_secure_password_here
 
-#### Application Configuration
-```bash
-# Data path (Docker uses /app/data by default)
-DATA_PATH=/app/data
-
-# Streamlit configuration
-STREAMLIT_SERVER_PORT=8501
-STREAMLIT_SERVER_HEADLESS=true
-STREAMLIT_SERVER_ENABLECORS=false
-STREAMLIT_SERVER_ENABLEXSRFPROTECTION=false
-```
-
-#### Logging Configuration
-```bash
-# Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO)
+# API Configuration
+API_HOST=0.0.0.0
+API_PORT=8000
+DEBUG=true
 LOG_LEVEL=INFO
 
-# Enable/disable file logging (default: true)
-ENABLE_FILE_LOGGING=true
+# Frontend Configuration
+REACT_APP_API_URL=http://localhost:8000
+REACT_APP_ENVIRONMENT=development
 
-# Enable/disable JSON structured logging (default: false)
-ENABLE_JSON_LOGGING=false
+# PgAdmin Configuration
+PGADMIN_DEFAULT_EMAIL=admin@spotify.local
+PGADMIN_DEFAULT_PASSWORD=admin_password
 
-# Enable/disable performance logging (default: true)
-ENABLE_PERFORMANCE_LOGGING=true
-
-# Maximum number of log files to keep during rotation (default: 30)
-MAX_LOG_FILES=30
-
-# Maximum log file size in MB before rotation (default: 50)
-MAX_LOG_SIZE_MB=50
-
-# Optional logging settings
-LOG_FORMAT=standard
-LOG_TO_CONSOLE=true
-LOG_TIMEZONE=UTC
+# Performance Tuning
+POSTGRES_SHARED_BUFFERS=256MB
+POSTGRES_EFFECTIVE_CACHE_SIZE=1GB
+POSTGRES_WORK_MEM=64MB
 ```
 
-#### Optional API Configuration
+### Development vs Production
 ```bash
-# API Settings
-SPOTIFY_API_BASE_URL=https://api.spotify.com/v1
-SPOTIFY_TOKEN_URL=https://accounts.spotify.com/api/token
-SPOTIFY_REQUESTS_PER_SECOND=10
-SPOTIFY_MAX_RETRIES=3
-ENABLE_SPOTIFY_API=true
+# Development environment (default)
+docker-compose up --build
 
-# Streamlit Settings
-STREAMLIT_SERVER_PORT=8501
-STREAMLIT_SERVER_HEADLESS=true
-STREAMLIT_SERVER_ENABLECORS=false
-STREAMLIT_SERVER_ENABLEXSRFPROTECTION=false
+# Production environment
+ENVIRONMENT=production docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build
+
+# Custom environment file
+docker-compose --env-file .env.production up --build
 ```
 
-### Using .env File
+## 🚀 Deployment Scenarios
 
-Create a `.env` file in the project root:
-
+### 1. First-Time Setup (Complete)
 ```bash
-# Copy template (includes all logging variables)
-cp .env.template .env
+# Complete setup with data import and model preparation
+docker-compose --profile setup up --build
 
-# Edit with your credentials and logging preferences
-SPOTIFY_CLIENT_ID=your_actual_client_id
-SPOTIFY_CLIENT_SECRET=your_actual_client_secret
-LOG_LEVEL=INFO
-ENABLE_PERFORMANCE_LOGGING=true
+# This will:
+# 1. Build all containers
+# 2. Start PostgreSQL and wait for readiness
+# 3. Prepare ML models
+# 4. Import all CSV data
+# 5. Start frontend and backend
+# 6. Launch PgAdmin
 ```
 
-**Security Note**: The `.env` file is automatically ignored by Docker and Git to prevent credential leaks.
-
-### Environment Variable Examples
-
-#### Development Setup (Verbose Logging)
+### 2. Regular Development
 ```bash
-LOG_LEVEL=DEBUG
-ENABLE_PERFORMANCE_LOGGING=true
-ENABLE_JSON_LOGGING=false
-ENABLE_FILE_LOGGING=true
-```
+# Start all services for development
+docker-compose up --build
 
-#### Production Setup (Optimized)
-```bash
-LOG_LEVEL=WARNING
-ENABLE_PERFORMANCE_LOGGING=true
-ENABLE_JSON_LOGGING=true
-MAX_LOG_SIZE_MB=100
-MAX_LOG_FILES=50
-```
-
-#### Minimal Setup (Basic Features Only)
-```bash
-ENABLE_FILE_LOGGING=false
-LOG_LEVEL=ERROR
-ENABLE_PERFORMANCE_LOGGING=false
-```
-
-## 📁 Volume Mounts
-
-The Docker setup includes the following volume mounts:
-
-```yaml
-volumes:
-  - ./data/raw:/app/data/raw:ro      # Raw data (read-only)
-  - ./data/models:/app/data/models:ro # Models (read-only)
-  - ./logs:/app/logs                  # Logs directory (read-write)
-```
-
-### Required Directory Structure
-```
-📦 Project Root/
-├── data/
-│   ├── raw/
-│   │   ├── spotify_tracks.csv
-│   │   ├── spotify_artists.csv
-│   │   └── low_level_audio_features.csv
-│   └── models/
-│       ├── hdbscan_model.pkl
-│       ├── knn_model.pkl
-│       ├── audio_embeddings.pkl
-│       ├── cluster_labels.pkl
-│       └── song_indices.pkl
-├── logs/                   # Auto-created for log files
-├── .env                    # Your environment variables
-└── docker-compose.yml     # Docker configuration
-```
-
-**Note**: The `logs/` directory will be automatically created when the container starts if it doesn't exist.
-
-## 🎛️ Service Management
-
-### Starting Services
-```bash
 # Start in background
+docker-compose up -d --build
+
+# Start specific services
+docker-compose up database backend -d
+```
+
+### 3. Production Deployment
+```bash
+# Production with optimized settings
+ENVIRONMENT=production docker-compose up --build
+
+# With custom configuration
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build
+
+# Scale services
+docker-compose up --scale backend=3 --scale frontend=2
+```
+
+### 4. Development with Hot Reload
+```bash
+# Backend with hot reload (mount source code)
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+# Frontend development server
+cd frontend && npm run dev
+```
+
+## 📁 Volume Management
+
+### Persistent Volumes
+```bash
+# View all volumes
+docker volume ls
+
+# Inspect volume details
+docker volume inspect spotify_recommendation_system_v2_postgres_data
+
+# Backup database volume
+docker run --rm -v spotify_recommendation_system_v2_postgres_data:/data -v $(pwd):/backup alpine tar czf /backup/postgres_backup.tar.gz /data
+
+# Restore database volume
+docker run --rm -v spotify_recommendation_system_v2_postgres_data:/data -v $(pwd):/backup alpine tar xzf /backup/postgres_backup.tar.gz -C /
+```
+
+### Host-Mounted Volumes
+```bash
+# Directory structure for volumes
+spotify_recommendation_system_v2/
+├── data/                    # Host volume for data
+│   ├── raw/                 # CSV files (read-only in container)
+│   └── models/              # ML models (read-write)
+├── logs/                    # Application logs
+└── database/                # Database initialization
+```
+
+## 🔍 Container Management
+
+### Service Control
+```bash
+# Start all services
 docker-compose up -d
 
-# Start with logs
-docker-compose up
-
-# Start specific service
-docker-compose up streamlit
-```
-
-### Stopping Services
-```bash
 # Stop all services
 docker-compose down
 
-# Stop and remove volumes
-docker-compose down -v
+# Restart specific service
+docker-compose restart backend
 
-# Force stop and cleanup
-docker-compose down --remove-orphans
-```
-
-### Viewing Logs
-```bash
-# View all logs
-docker-compose logs
-
-# Follow logs
-docker-compose logs -f
-
-# Service-specific logs
-docker-compose logs streamlit
-
-# View application log files (from host)
-tail -f logs/spotify_recommender.log
-tail -f logs/spotify_recommender_errors.log
-tail -f logs/spotify_recommender_performance.log
-```
-
-## 📊 Logging and Monitoring
-
-### Log Files (Available on Host)
-
-When using Docker, log files are mounted to your local `logs/` directory:
-
-```bash
-# View real-time application logs
-tail -f logs/spotify_recommender.log
-
-# View performance metrics
-tail -f logs/spotify_recommender_performance.log
-
-# View errors only
-tail -f logs/spotify_recommender_errors.log
-
-# View structured JSON logs (if enabled)
-tail -f logs/spotify_recommender_structured.json | jq '.'
-```
-
-### Log Analysis Examples
-
-```bash
-# Count recommendation types
-grep "recommendation" logs/spotify_recommender.log | cut -d' ' -f8 | sort | uniq -c
-
-# Monitor API response times
-grep "Spotify API" logs/spotify_recommender_performance.log | grep -o "[0-9]\+\.[0-9]\+s"
-
-# Check error rates
-grep -c "ERROR\|CRITICAL" logs/spotify_recommender_errors.log
-```
-
-### Logging Dashboard
-
-Access the built-in logging dashboard at `http://localhost:8501` → Sidebar → "📊 Logging Dashboard"
-
-Features:
-- Real-time log statistics
-- Configuration viewing
-- Test log generation
-- File size monitoring
-
-## 🔍 Monitoring and Health Checks
-
-### Health Check Status
-```bash
-# Check container health
+# View service status
 docker-compose ps
 
-# Detailed health information
-docker inspect spotify-recommendation-system
+# View service logs
+docker-compose logs -f backend
+docker-compose logs -f database
 ```
 
-### Application Health
-The application includes built-in health checks:
-- **Endpoint**: `http://localhost:8501/_stcore/health`
-- **Interval**: 30 seconds
-- **Timeout**: 10 seconds
-- **Retries**: 3
-
-### Resource Monitoring
+### Container Inspection
 ```bash
-# View resource usage
-docker stats spotify-recommendation-system
+# Execute commands in containers
+docker-compose exec backend bash
+docker-compose exec database psql -U spotify_user -d spotify_recommendations
 
-# Container information
-docker inspect spotify-recommendation-system
+# View container processes
+docker-compose top
 
-# Log file sizes
-du -sh logs/*
+# Monitor resource usage
+docker stats $(docker-compose ps -q)
 ```
 
-## 🛠️ Development and Debugging
-
-### Development Mode
+### Health Monitoring
 ```bash
-# Mount source code for development
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# Check service health
+docker-compose ps
+
+# Test API health
+curl http://localhost:8000/health
+
+# Test database connectivity
+docker-compose exec database pg_isready -U spotify_user
+
+# View detailed logs
+docker-compose logs --tail=100 -f
 ```
 
-### Debugging
+## 🛠️ Development Workflow
+
+### Backend Development
 ```bash
-# Execute shell in container
-docker-compose exec streamlit bash
+# Start only database for backend development
+docker-compose up database -d
 
-# View environment variables
-docker-compose exec streamlit env | grep SPOTIFY
+# Develop backend locally with hot reload
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 
-# Test API connectivity
-docker-compose exec streamlit python -c "from spotify_api_client import create_spotify_client; client = create_spotify_client(); print('Connected!' if client._get_access_token() else 'Failed')"
+# Or use container with volume mount
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up backend
 ```
 
-### Rebuilding
+### Frontend Development
 ```bash
-# Rebuild after code changes
-docker-compose build --no-cache
+# Start backend services
+docker-compose up database backend -d
 
-# Rebuild and restart
-docker-compose up --build -d
+# Develop frontend locally
+cd frontend
+npm install
+npm run dev
+
+# Or use container development
+docker-compose up frontend
 ```
 
-## 📊 Performance Optimization
-
-### Memory Configuration
+### Database Development
 ```bash
-# Increase memory limit if needed
-docker run --memory="2g" spotify-recommendation-system
-```
+# Access database directly
+docker-compose exec database psql -U spotify_user -d spotify_recommendations
 
-### CPU Configuration
-```bash
-# Limit CPU usage
-docker run --cpus="1.0" spotify-recommendation-system
-```
+# Run database migrations
+docker-compose exec backend python -m app.database.migrate
 
-### Container Optimization
-- Uses `python:3.11-slim` for smaller image size
-- Multi-stage builds for production deployments
-- Proper layer caching for faster rebuilds
-
-## 🚀 Production Deployment
-
-### Security Hardening
-```bash
-# Run as non-root user
-docker run --user 1000:1000 spotify-recommendation-system
-
-# Read-only file system
-docker run --read-only spotify-recommendation-system
-```
-
-### Scaling
-```bash
-# Scale to multiple instances
-docker-compose up --scale streamlit=3
-
-# Load balancing (requires nginx configuration)
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-
-### Reverse Proxy Configuration
-```nginx
-# nginx.conf
-upstream streamlit {
-    server localhost:8501;
-    server localhost:8502;
-    server localhost:8503;
-}
-
-server {
-    listen 80;
-    server_name your-domain.com;
-    
-    location / {
-        proxy_pass http://streamlit;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
+# Access PgAdmin
+open http://localhost:5050
 ```
 
 ## 🔧 Troubleshooting
 
 ### Common Issues
 
-#### Container Won't Start
+#### ❌ Services Won't Start
 ```bash
-# Check logs
-docker-compose logs streamlit
-
-# Verify port availability
-netstat -tulpn | grep 8501
-
 # Check Docker daemon
 docker info
+
+# Check available resources
+docker system df
+docker system prune -f
+
+# View service logs
+docker-compose logs database
+docker-compose logs backend
 ```
 
-#### Spotify API Not Working
+#### ❌ Database Connection Issues
 ```bash
-# Verify environment variables
-docker-compose exec streamlit env | grep SPOTIFY
+# Check database health
+docker-compose exec database pg_isready -U spotify_user
 
-# Test API connectivity
-docker-compose exec streamlit curl -v https://accounts.spotify.com/api/token
+# Restart database
+docker-compose restart database
 
-# Check credentials format
-docker-compose exec streamlit python -c "import os; print('ID:', len(os.getenv('SPOTIFY_CLIENT_ID', ''))); print('Secret:', len(os.getenv('SPOTIFY_CLIENT_SECRET', '')))"
+# Check network connectivity
+docker-compose exec backend ping database
 ```
 
-#### Data Not Loading
+#### ❌ Port Conflicts
 ```bash
-# Check volume mounts
-docker-compose exec streamlit ls -la /app/data/raw/
-docker-compose exec streamlit ls -la /app/data/models/
+# Check what's using ports
+netstat -tulpn | grep :3000
+netstat -tulpn | grep :8000
+netstat -tulpn | grep :5432
 
-# Verify file permissions
-ls -la data/raw/
-ls -la data/models/
+# Change ports in docker-compose.yml
+ports:
+  - "3001:3000"  # Change host port
+  - "8001:8000"
 ```
 
-#### Performance Issues
+#### ❌ Volume Permission Issues
 ```bash
-# Monitor resource usage
-docker stats
+# Fix volume permissions
+sudo chown -R $USER:$USER ./data
+sudo chown -R $USER:$USER ./logs
 
-# Check memory limits
-docker-compose exec streamlit free -h
-
-# Verify CPU usage
-docker-compose exec streamlit top
+# Or use Docker user mapping
+user: "${UID:-1000}:${GID:-1000}"
 ```
 
-### Getting Help
-- **Logs**: Always check `docker-compose logs` first
-- **Health**: Monitor health check status
-- **Resources**: Ensure adequate memory and CPU
-- **Network**: Verify port accessibility
-- **Credentials**: Double-check Spotify API setup
+#### ❌ Memory Issues
+```bash
+# Increase Docker memory limit
+# Docker Desktop -> Settings -> Resources -> Memory -> 8GB+
 
-## 📚 Additional Resources
+# Monitor memory usage
+docker stats --no-stream
 
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [Streamlit Docker Deployment](https://docs.streamlit.io/knowledge-base/tutorials/deploy/docker)
-- [Spotify API Setup Guide](SPOTIFY_SETUP.md)
-- [Application Documentation](README.md)
+# Clean up unused containers and images
+docker system prune -a
+```
+
+### Performance Optimization
+
+#### Database Performance
+```bash
+# Tune PostgreSQL settings in docker-compose.yml
+environment:
+  - POSTGRES_SHARED_BUFFERS=512MB
+  - POSTGRES_EFFECTIVE_CACHE_SIZE=2GB
+  - POSTGRES_WORK_MEM=128MB
+  - POSTGRES_MAINTENANCE_WORK_MEM=256MB
+  - POSTGRES_MAX_CONNECTIONS=200
+```
+
+#### Application Performance
+```bash
+# Scale backend services
+docker-compose up --scale backend=3
+
+# Use production builds
+ENVIRONMENT=production docker-compose up --build
+
+# Enable caching
+environment:
+  - REDIS_URL=redis://redis:6379
+```
+
+## 📊 Monitoring and Logging
+
+### Log Management
+```bash
+# View logs from all services
+docker-compose logs -f
+
+# View logs from specific timeframe
+docker-compose logs --since="2024-01-01T00:00:00Z" --until="2024-01-01T23:59:59Z"
+
+# Configure log rotation in docker-compose.yml
+logging:
+  driver: "json-file"
+  options:
+    max-size: "100m"
+    max-file: "3"
+```
+
+### Health Checks
+```bash
+# Add health checks to services
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+```
+
+### Monitoring Stack (Optional)
+```yaml
+# Add to docker-compose.yml for monitoring
+services:
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+```
+
+## 🚀 Production Deployment
+
+### Production Configuration
+```yaml
+# docker-compose.prod.yml
+services:
+  backend:
+    environment:
+      - DEBUG=false
+      - LOG_LEVEL=WARNING
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+
+  database:
+    environment:
+      - POSTGRES_SHARED_BUFFERS=1GB
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=4GB
+    restart: unless-stopped
+```
+
+### SSL and Security
+```bash
+# Add SSL termination with nginx
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/ssl/certs
+    depends_on:
+      - frontend
+      - backend
+```
+
+### Backup Strategy
+```bash
+# Automated backup script
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+docker-compose exec -T database pg_dump -U spotify_user spotify_recommendations > "backup_${DATE}.sql"
+```
+
+## 🤝 Best Practices
+
+### Security
+- Use strong passwords in `.env` file
+- Keep `.env` file out of version control
+- Use Docker secrets for production
+- Regular security updates: `docker-compose pull`
+
+### Performance
+- Allocate adequate resources to Docker
+- Use multi-stage builds for smaller images
+- Implement proper caching strategies
+- Monitor resource usage regularly
+
+### Maintenance
+- Regular backups of database and models
+- Log rotation and cleanup
+- Update base images periodically
+- Monitor disk space usage
 
 ---
 
-🐳 **Happy containerizing!** 🐳 
+**🐳 Happy Containerized Deployment!** 🐳 
