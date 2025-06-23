@@ -38,7 +38,7 @@ def get_model_service(request: Request) -> ModelService:
     return request.app.state.model_service
 
 
-def _track_to_song(track: Track) -> Song:
+def _track_to_song(track: Track, similarity_score: float = None) -> Song:
     """Convert a Track database object to a Song schema object"""
     # Extract album image URL from images JSON
     album_image_url = None
@@ -73,7 +73,8 @@ def _track_to_song(track: Track) -> Song:
         cluster_id=track.cluster_id or -1,
         preview_url=track.preview_url,
         spotify_url=track.spotify_uri or f"https://open.spotify.com/track/{track.id}",
-        album_image_url=album_image_url
+        album_image_url=album_image_url,
+        similarity_score=similarity_score
     )
 
 
@@ -498,6 +499,10 @@ async def compare_recommendation_models(
                     response = await get_genre_based_recommendations(rec_request, db)
                 elif model_type == "cluster" and model_service.is_ready():
                     response = await model_service.get_recommendations_with_similarity(rec_request, db)
+                elif model_type == "global":
+                    response = await get_global_recommendations(rec_request, db)
+                elif model_type == "hybrid":
+                    response = await get_hybrid_recommendations(rec_request, db, model_service)
                 else:
                     # Fallback to database-only recommendations
                     response = await get_recommendations(rec_request, db, model_service)
@@ -794,8 +799,25 @@ async def get_artist_based_recommendations(
         random.shuffle(recommendations)
         recommendations = recommendations[:request.n_recommendations]
         
-        # Convert to Song objects
-        song_recommendations = [_track_to_song(track) for track in recommendations]
+        # Convert to Song objects with artist similarity scores
+        song_recommendations = []
+        liked_artist_ids = set([track.artist.id for track in liked_tracks if track.artist])
+        
+        for track in recommendations:
+            # Calculate similarity based on how many liked artists this track's artist matches
+            if track.artist and track.artist.id in liked_artist_ids:
+                # Full match for same artist - use percentage score (0-100)
+                similarity = 85 + (track.popularity / 10)  # Base 85% + popularity bonus
+            else:
+                # Partial match based on genre similarity or other factors
+                similarity = 30 + (track.popularity / 10)  # Lower base score for different artists
+            
+            # Ensure score stays within 0-100 range
+            similarity = min(100, max(0, similarity))
+            song_recommendations.append(_track_to_song(track, similarity))
+        
+        # Sort by similarity descending (higher is better for artist matching)
+        song_recommendations.sort(key=lambda x: x.similarity_score, reverse=True)
         
         processing_time = (time.time() - start_time) * 1000
         
@@ -884,8 +906,43 @@ async def get_genre_based_recommendations(
         random.shuffle(recommendations)
         recommendations = recommendations[:request.n_recommendations]
         
-        # Convert to Song objects
-        song_recommendations = [_track_to_song(track) for track in recommendations]
+        # Convert to Song objects with feature similarity scores
+        song_recommendations = []
+        for track in recommendations:
+            # Calculate similarity based on audio features
+            similarity = 0.0
+            feature_count = 0
+            
+            for feature in features:
+                if feature in avg_features and getattr(track, feature) is not None:
+                    avg_val = avg_features[feature]
+                    track_val = getattr(track, feature)
+                    
+                    # Calculate normalized difference (closer to 0 means more similar)
+                    if avg_val != 0:
+                        diff = abs(track_val - avg_val) / abs(avg_val)
+                        # Convert to similarity (1 - normalized_difference)
+                        feature_similarity = max(0, 1 - diff)
+                    else:
+                        feature_similarity = 1.0 if track_val == 0 else 0.0
+                    
+                    similarity += feature_similarity
+                    feature_count += 1
+            
+            # Average similarity across features and convert to percentage (0-100)
+            if feature_count > 0:
+                similarity = (similarity / feature_count) * 100  # Convert to percentage
+                # Add popularity bonus
+                similarity = min(100, similarity + (track.popularity / 10))
+            else:
+                similarity = track.popularity  # Fallback to popularity as percentage
+            
+            # Ensure score stays within 0-100 range
+            similarity = min(100, max(0, similarity))
+            song_recommendations.append(_track_to_song(track, similarity))
+        
+        # Sort by similarity descending (higher is better for genre matching)
+        song_recommendations.sort(key=lambda x: x.similarity_score, reverse=True)
         
         processing_time = (time.time() - start_time) * 1000
         
@@ -909,33 +966,220 @@ async def get_hdbscan_knn_recommendations(
     model_service: ModelService = Depends(get_model_service)
 ) -> RecommendationResponse:
     """
-    Get recommendations using the trained HDBSCAN clustering + KNN model
-    This uses actual audio feature embeddings and trained ML models
+    Get recommendations using HDBSCAN + KNN models directly
+    This endpoint forces the use of trained models if available
+    """
+    if not model_service.is_ready():
+        raise HTTPException(
+            status_code=503,
+            detail="Trained HDBSCAN + KNN models are not available"
+        )
+    
+    response = await model_service.get_recommendations_with_similarity(request, db)
+    response.recommendation_type = "hdbscan_knn"
+    return response
+
+
+async def get_global_recommendations(
+    request: RecommendationRequest,
+    db: AsyncSession
+) -> RecommendationResponse:
+    """
+    Get globally popular recommendations regardless of user preferences
+    Based on overall song popularity and trending metrics
     """
     start_time = time.time()
     
     try:
-        logger.info(f"🎯 Getting HDBSCAN + KNN recommendations for {len(request.liked_song_ids)} songs")
+        logger.info(f"🌍 Getting global popular recommendations")
         
-        if not model_service.is_ready():
-            raise HTTPException(
-                status_code=503, 
-                detail="HDBSCAN + KNN models not loaded. Please ensure models are available in /app/models/"
-            )
+        # Get globally popular songs with diversity
+        popular_query = select(Track).options(
+            joinedload(Track.artist),
+            joinedload(Track.album)
+        ).filter(
+            Track.popularity >= 60,  # High popularity threshold
+            ~Track.id.in_(request.liked_song_ids)  # Exclude already liked songs
+        ).order_by(
+            Track.popularity.desc(),
+            func.random()  # Add some randomness for diversity
+        ).limit(request.n_recommendations * 2)  # Get more for filtering
         
-        # Use the model service's trained ML models
-        response = await model_service.get_recommendations_with_similarity(request, db)
+        result = await db.execute(popular_query)
+        all_recommendations = result.scalars().all()
         
-        # Update the recommendation type to reflect the specific model used
-        response.recommendation_type = "hdbscan_knn"
+        # Add some diversity by mixing high and medium popularity
+        high_pop = [t for t in all_recommendations if t.popularity >= 80]
+        medium_pop = [t for t in all_recommendations if 60 <= t.popularity < 80]
+        
+        # Mix the results for diversity
+        recommendations = []
+        high_idx = medium_idx = 0
+        
+        for i in range(min(request.n_recommendations, len(all_recommendations))):
+            if i % 3 == 0 and medium_idx < len(medium_pop):
+                # Every 3rd song from medium popularity for diversity
+                recommendations.append(medium_pop[medium_idx])
+                medium_idx += 1
+            elif high_idx < len(high_pop):
+                recommendations.append(high_pop[high_idx])
+                high_idx += 1
+            elif medium_idx < len(medium_pop):
+                recommendations.append(medium_pop[medium_idx])
+                medium_idx += 1
+        
+        # Convert to Song objects with popularity-based similarity scores
+        song_recommendations = []
+        for track in recommendations:
+            # Use popularity as base score and add some randomness for diversity
+            similarity = track.popularity + random.uniform(-10, 10)  # Use popularity as percentage with variance
+            # Ensure score stays within 0-100 range
+            similarity = min(100, max(0, similarity))
+            song_recommendations.append(_track_to_song(track, similarity))
+        
+        # Sort by similarity descending (higher is better for global popularity)
+        song_recommendations.sort(key=lambda x: x.similarity_score, reverse=True)
         
         processing_time = (time.time() - start_time) * 1000
-        response.processing_time_ms = processing_time
         
-        logger.success(f"✅ Generated {len(response.recommendations)} HDBSCAN + KNN recommendations in {processing_time:.1f}ms")
+        response = RecommendationResponse(
+            recommendations=song_recommendations,
+            recommendation_type="global",
+            clusters_used=[],
+            total_found=len(song_recommendations),
+            processing_time_ms=processing_time
+        )
         
+        logger.success(f"✅ Generated {len(song_recommendations)} global recommendations in {processing_time:.1f}ms")
         return response
         
     except Exception as e:
-        logger.error(f"❌ Error getting HDBSCAN + KNN recommendations: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        processing_time = (time.time() - start_time) * 1000
+        logger.error(f"❌ Error generating global recommendations: {e} (took {processing_time:.1f}ms)")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating global recommendations: {str(e)}"
+        )
+
+
+async def get_hybrid_recommendations(
+    request: RecommendationRequest,
+    db: AsyncSession,
+    model_service: ModelService
+) -> RecommendationResponse:
+    """
+    Get hybrid recommendations combining multiple approaches
+    Blends cluster-based, popularity-based, and content-based recommendations
+    """
+    start_time = time.time()
+    
+    try:
+        logger.info(f"🔀 Getting hybrid recommendations combining multiple approaches")
+        
+        all_recommendations = []
+        weights = {
+            'cluster': 0.4,      # 40% cluster-based
+            'popularity': 0.3,   # 30% popularity-based  
+            'content': 0.3       # 30% content-based (genre/artist)
+        }
+        
+        # 1. Get cluster-based recommendations (if available)
+        cluster_recs = []
+        if model_service.is_ready():
+            try:
+                cluster_request = RecommendationRequest(
+                    liked_song_ids=request.liked_song_ids,
+                    n_recommendations=int(request.n_recommendations * weights['cluster'] * 2),
+                    recommendation_type="cluster"
+                )
+                cluster_response = await model_service.get_recommendations_with_similarity(cluster_request, db)
+                cluster_recs = [(song, song.similarity_score or 0.0, 'cluster') for song in cluster_response.recommendations]
+            except Exception as e:
+                logger.warning(f"Cluster recommendations failed in hybrid: {e}")
+        
+        # 2. Get popularity-based recommendations
+        popularity_recs = []
+        try:
+            pop_request = RecommendationRequest(
+                liked_song_ids=request.liked_song_ids,
+                n_recommendations=int(request.n_recommendations * weights['popularity'] * 2),
+                recommendation_type="global"
+            )
+            pop_response = await get_global_recommendations(pop_request, db)
+            popularity_recs = [(song, song.similarity_score or 0.0, 'popularity') for song in pop_response.recommendations]
+        except Exception as e:
+            logger.warning(f"Popularity recommendations failed in hybrid: {e}")
+        
+        # 3. Get content-based recommendations (artist similarity)
+        content_recs = []
+        try:
+            content_request = RecommendationRequest(
+                liked_song_ids=request.liked_song_ids,
+                n_recommendations=int(request.n_recommendations * weights['content'] * 2),
+                recommendation_type="artist_based"
+            )
+            content_response = await get_artist_based_recommendations(content_request, db)
+            content_recs = [(song, song.similarity_score or 0.0, 'content') for song in content_response.recommendations]
+        except Exception as e:
+            logger.warning(f"Content recommendations failed in hybrid: {e}")
+        
+        # Combine and weight the recommendations
+        all_recs = cluster_recs + popularity_recs + content_recs
+        
+        # Calculate hybrid scores
+        song_scores = {}
+        for song, score, source in all_recs:
+            if song.id not in song_scores:
+                song_scores[song.id] = {
+                    'song': song,
+                    'scores': {'cluster': 0, 'popularity': 0, 'content': 0},
+                    'count': {'cluster': 0, 'popularity': 0, 'content': 0}
+                }
+            
+            song_scores[song.id]['scores'][source] = max(song_scores[song.id]['scores'][source], score)
+            song_scores[song.id]['count'][source] += 1
+        
+        # Calculate final hybrid scores
+        final_recommendations = []
+        for song_id, data in song_scores.items():
+            song = data['song']
+            scores = data['scores']
+            
+            # Weighted hybrid score (convert to percentage)
+            hybrid_score = (
+                scores['cluster'] * weights['cluster'] +
+                scores['popularity'] * weights['popularity'] +
+                scores['content'] * weights['content']
+            )
+            
+            # Boost songs that appear in multiple methods (percentage bonus)
+            diversity_bonus = len([s for s in scores.values() if s > 0]) * 5  # 5% bonus per method
+            final_score = min(100, hybrid_score + diversity_bonus)  # Keep within 0-100 range
+            
+            song.similarity_score = final_score
+            final_recommendations.append((song, final_score))
+        
+        # Sort by hybrid score and take top N
+        final_recommendations.sort(key=lambda x: x[1], reverse=True)
+        recommendations = [song for song, _ in final_recommendations[:request.n_recommendations]]
+        
+        processing_time = (time.time() - start_time) * 1000
+        
+        response = RecommendationResponse(
+            recommendations=recommendations,
+            recommendation_type="hybrid",
+            clusters_used=[],
+            total_found=len(recommendations),
+            processing_time_ms=processing_time
+        )
+        
+        logger.success(f"✅ Generated {len(recommendations)} hybrid recommendations in {processing_time:.1f}ms")
+        return response
+        
+    except Exception as e:
+        processing_time = (time.time() - start_time) * 1000
+        logger.error(f"❌ Error generating hybrid recommendations: {e} (took {processing_time:.1f}ms)")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating hybrid recommendations: {str(e)}"
+        )
