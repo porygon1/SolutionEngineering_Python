@@ -1,4 +1,3 @@
-
 """
 Compatible Model Loader for Backend Service
 Handles the new individual model file format
@@ -67,8 +66,8 @@ class CompatibleLyricsSimilarityModel:
         else:
             distances, indices = self.model.kneighbors(query_vector, n_neighbors=k)
 
-        similarities = 1 - distances[0]  # Convert distance to similarity
-        return indices[0].tolist(), similarities.tolist()
+        # Return actual distances instead of converting to similarities
+        return indices[0].tolist(), distances[0].tolist()
 
     def preprocess_lyrics(self, text: str) -> str:
         """Preprocess lyrics using the same method as training"""
