@@ -378,32 +378,201 @@ function HomePage() {
   );
 }
 
+// Add a new component for the Base Songs Sidebar
+function BaseSongsSidebar({ 
+  baseSongs, 
+  isOpen, 
+  onToggle, 
+  onRemoveSong, 
+  onClearAll 
+}: {
+  baseSongs: Song[];
+  isOpen: boolean;
+  onToggle: () => void;
+  onRemoveSong: (songId: string) => void;
+  onClearAll: () => void;
+}) {
+  const { playTrack, currentTrack, isPlaying } = useAudio();
+
+  return (
+    <>
+      {/* Toggle Button */}
+      <motion.button
+        onClick={onToggle}
+        className={`fixed top-1/2 transform -translate-y-1/2 z-50 transition-all duration-300 ${
+          isOpen ? 'right-80' : 'right-4'
+        } bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg`}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+      >
+        <Music className="w-5 h-5" />
+        {baseSongs.length > 0 && (
+          <span className="absolute -top-2 -left-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+            {baseSongs.length}
+          </span>
+        )}
+      </motion.button>
+
+      {/* Sidebar */}
+      <motion.div
+        initial={{ x: 320 }}
+        animate={{ x: isOpen ? 0 : 320 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="fixed right-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-sm border-l border-gray-800 z-40 overflow-y-auto"
+      >
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-green-400">Base Songs</h3>
+              <p className="text-sm text-gray-400">Songs used for recommendations</p>
+            </div>
+            <button
+              onClick={onToggle}
+              className="p-2 rounded-full hover:bg-gray-800 transition-colors text-gray-400 hover:text-white"
+            >
+              ×
+            </button>
+          </div>
+
+          {baseSongs.length === 0 ? (
+            <div className="text-center py-8">
+              <Music className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-400 text-sm">
+                No base songs selected yet. Like some songs to see them here!
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Clear All Button */}
+              <div className="mb-4">
+                <button
+                  onClick={onClearAll}
+                  className="w-full px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm transition-colors"
+                >
+                  Clear All ({baseSongs.length})
+                </button>
+              </div>
+
+              {/* Songs List */}
+              <div className="space-y-3">
+                {baseSongs.map((song, index) => {
+                  const isCurrentTrack = currentTrack?.id === song.id;
+                  return (
+                    <div
+                      key={song.id}
+                      className="bg-gray-800/50 rounded-lg p-3 border border-gray-700 hover:border-green-500/50 transition-all"
+                    >
+                      <div className="flex items-center space-x-3">
+                        {/* Album Cover */}
+                        <div className="relative flex-shrink-0">
+                          <div className="w-12 h-12 rounded-md bg-gray-700 flex items-center justify-center overflow-hidden">
+                            <img
+                              src={generateAlbumCover(song)}
+                              alt={`${song.name} by ${song.artist}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                            <Music className="w-6 h-6 text-gray-600 hidden" />
+                          </div>
+                          
+                          {/* Play Button Overlay */}
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            onClick={() => playTrack(song)}
+                            className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-md opacity-0 hover:opacity-100 transition-opacity"
+                          >
+                            {isCurrentTrack && isPlaying ? (
+                              <Pause className="w-4 h-4 text-white" />
+                            ) : (
+                              <Play className="w-4 h-4 text-white ml-0.5" />
+                            )}
+                          </motion.button>
+                        </div>
+
+                        {/* Song Info */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-white font-medium truncate text-sm">{song.name}</h4>
+                          <p className="text-gray-400 text-xs truncate">{song.artist}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <div className="flex-1 bg-gray-700 rounded-full h-1">
+                              <div
+                                className="bg-green-500 h-full rounded-full"
+                                style={{ width: `${song.popularity}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-500">{song.popularity}%</span>
+                          </div>
+                        </div>
+
+                        {/* Remove Button */}
+                        <button
+                          onClick={() => onRemoveSong(song.id)}
+                          className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+                        >
+                          <span className="sr-only">Remove song</span>
+                          ×
+                        </button>
+                      </div>
+
+                      {/* Currently Playing Indicator */}
+                      {isCurrentTrack && (
+                        <div className="mt-2 flex items-center space-x-2">
+                          <div className="flex space-x-1">
+                            <div className="w-1 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                            <div className="w-1 h-2 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-1 h-4 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                          <span className="text-xs text-green-400">
+                            {isPlaying ? 'Now Playing' : 'Paused'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Backdrop */}
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onToggle}
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
+        />
+      )}
+    </>
+  );
+}
+
 function RecommendationsPage() {
   const [likedSongIds, setLikedSongIds] = React.useState<string[]>(() => {
     const saved = localStorage.getItem('likedSongs');
     return saved ? JSON.parse(saved) : [];
   });
-  const [selectedStrategy, setSelectedStrategy] = React.useState<string>('cluster');
-  const [selectedModel, setSelectedModel] = React.useState<string>('svd_knn');
+  const [selectedApproach, setSelectedApproach] = React.useState<string>('audio_similarity');
+  const [selectedLyricsModel, setSelectedLyricsModel] = React.useState<string>('svd_knn');
   const [recommendationCount, setRecommendationCount] = React.useState<number>(20);
+  const [isModelSwitching, setIsModelSwitching] = React.useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState<boolean>(false);
   
-  // Fetch available models
+  // Fetch available models (only needed for lyrics approach)
   const { data: availableModels, isLoading: modelsLoading, error: modelsError } = useQuery({
     queryKey: ['available-models'],
     queryFn: () => apiService.recommendations.getAvailableModels(),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 3
+    retry: 3,
+    enabled: selectedApproach === 'lyrics_similarity'
   });
-
-  // Debug log for models
-  React.useEffect(() => {
-    if (availableModels) {
-      console.log('Available models loaded:', availableModels);
-    }
-    if (modelsError) {
-      console.error('Error loading models:', modelsError);
-    }
-  }, [availableModels, modelsError]);
 
   // Fetch liked songs details for display
   const { data: likedSongs } = useQuery({
@@ -419,21 +588,92 @@ function RecommendationsPage() {
     enabled: likedSongIds.length > 0
   });
 
-  // Switch model when selected model changes
+  // Switch to selected lyrics model when needed
   React.useEffect(() => {
-    if (selectedStrategy === 'cluster' || selectedStrategy === 'hdbscan_knn' || selectedStrategy === 'lyrics') {
-      apiService.recommendations.switchModel(selectedModel).catch(console.error);
+    if (selectedApproach === 'lyrics_similarity') {
+      setIsModelSwitching(true);
+      apiService.recommendations.switchModel(selectedLyricsModel)
+        .then(() => {
+          // Small delay to ensure model is fully loaded
+          setTimeout(() => setIsModelSwitching(false), 500);
+        })
+        .catch((error) => {
+          console.error('Failed to switch model:', error);
+          setIsModelSwitching(false);
+        });
+    } else {
+      setIsModelSwitching(false);
     }
-  }, [selectedModel, selectedStrategy]);
+  }, [selectedApproach, selectedLyricsModel]);
 
+  // Map approaches to actual recommendation types and API calls
+  const getRecommendationConfig = () => {
+    switch (selectedApproach) {
+      case 'audio_similarity':
+        return { 
+          type: 'hdbscan_knn', 
+          queryFn: () => apiService.recommendations.getHdbscanKnn({
+            liked_song_ids: likedSongIds,
+            n_recommendations: recommendationCount,
+            recommendation_type: 'hdbscan_knn'
+          })
+        };
+      case 'lyrics_similarity':
+        return { 
+          type: 'lyrics', 
+          queryFn: () => apiService.recommendations.get({
+            liked_song_ids: likedSongIds,
+            n_recommendations: recommendationCount,
+            recommendation_type: 'lyrics'
+          })
+        };
+      case 'similar_artists':
+        return { 
+          type: 'artist_based', 
+          queryFn: () => apiService.recommendations.getArtistBased({
+            liked_song_ids: likedSongIds,
+            n_recommendations: recommendationCount,
+            recommendation_type: 'artist_based'
+          })
+        };
+      case 'similar_genres':
+        return { 
+          type: 'genre_based', 
+          queryFn: () => apiService.recommendations.getGenreBased({
+            liked_song_ids: likedSongIds,
+            n_recommendations: recommendationCount,
+            recommendation_type: 'genre_based'
+          })
+        };
+      case 'cluster_based':
+        return { 
+          type: 'cluster', 
+          queryFn: () => apiService.recommendations.get({
+            liked_song_ids: likedSongIds,
+            n_recommendations: recommendationCount,
+            recommendation_type: 'cluster'
+          })
+        };
+      default:
+        return { 
+          type: 'hdbscan_knn', 
+          queryFn: () => apiService.recommendations.getHdbscanKnn({
+            liked_song_ids: likedSongIds,
+            n_recommendations: recommendationCount,
+            recommendation_type: 'hdbscan_knn'
+          })
+        };
+    }
+  };
+
+  const config = getRecommendationConfig();
+  
   const { data: recommendations, isLoading, error, refetch } = useQuery({
-    queryKey: ['recommendations', likedSongIds, selectedStrategy, selectedModel, recommendationCount],
-    queryFn: () => apiService.recommendations.get({
-      liked_song_ids: likedSongIds,
-      n_recommendations: recommendationCount,
-      recommendation_type: selectedStrategy
-    }),
-    enabled: likedSongIds.length > 0
+    queryKey: ['recommendations', likedSongIds, selectedApproach, selectedLyricsModel],
+    queryFn: config.queryFn,
+    enabled: likedSongIds.length > 0 && !isModelSwitching,
+    staleTime: 0, // Always refetch when enabled
+    refetchOnMount: true
   });
 
   const { data: popularSongs } = useQuery({
@@ -441,196 +681,351 @@ function RecommendationsPage() {
     queryFn: () => apiService.songs.getPopular({ limit: 20, min_popularity: 70 })
   });
 
-  // Additional recommendation strategies
-  const { data: artistBasedRecs, isLoading: artistBasedLoading } = useQuery({
-    queryKey: ['artist-based-recs', likedSongIds, recommendationCount],
-    queryFn: () => apiService.recommendations.getArtistBased({
-      liked_song_ids: likedSongIds,
-      n_recommendations: recommendationCount,
-      recommendation_type: 'artist_based'
-    }),
-    enabled: likedSongIds.length > 0 && selectedStrategy === 'similar_artists'
-  });
-
-  const { data: genreBasedRecs, isLoading: genreBasedLoading } = useQuery({
-    queryKey: ['genre-based-recs', likedSongIds, recommendationCount],
-    queryFn: () => apiService.recommendations.getGenreBased({
-      liked_song_ids: likedSongIds,
-      n_recommendations: recommendationCount,
-      recommendation_type: 'genre_based'
-    }),
-    enabled: likedSongIds.length > 0 && selectedStrategy === 'genre_based'
-  });
-
-  const { data: hdbscanRecs, isLoading: hdbscanLoading } = useQuery({
-    queryKey: ['hdbscan-recs', likedSongIds, recommendationCount, selectedModel],
-    queryFn: () => apiService.recommendations.getHdbscanKnn({
-      liked_song_ids: likedSongIds,
-      n_recommendations: recommendationCount,
-      recommendation_type: 'hdbscan_knn'
-    }),
-    enabled: likedSongIds.length > 0 && selectedStrategy === 'hdbscan_knn'
-  });
-
-  const getCurrentRecommendations = () => {
-    switch (selectedStrategy) {
-      case 'similar_artists':
-        return { 
-          recommendations: artistBasedRecs?.recommendations || [], 
-          isLoading: artistBasedLoading, 
-          error: null,
-          processingTime: artistBasedRecs?.processing_time_ms 
-        };
-      case 'genre_based':
-        return { 
-          recommendations: genreBasedRecs?.recommendations || [], 
-          isLoading: genreBasedLoading, 
-          error: null,
-          processingTime: genreBasedRecs?.processing_time_ms 
-        };
-      case 'hdbscan_knn':
-        return { 
-          recommendations: hdbscanRecs?.recommendations || [], 
-          isLoading: hdbscanLoading, 
-          error: null,
-          processingTime: hdbscanRecs?.processing_time_ms 
-        };
-      default:
-        return { 
-          recommendations: recommendations?.recommendations || [], 
-          isLoading, 
-          error,
-          processingTime: recommendations?.processing_time_ms 
-        };
+  // Define recommendation approaches with clear descriptions
+  const approaches = {
+    audio_similarity: {
+      name: '🎵 Audio Features',
+      description: 'Find songs with similar musical characteristics (tempo, energy, mood)',
+      details: 'Uses advanced machine learning to analyze audio features like danceability, energy, and acousticness. Best for discovering new songs that "feel" similar to your favorites.',
+      badge: 'ML-Powered',
+      badgeColor: 'bg-purple-500'
+    },
+    lyrics_similarity: {
+      name: '📝 Lyrics & Themes', 
+      description: 'Find songs with similar lyrical content and themes',
+      details: 'Analyzes lyrics using natural language processing to find songs with similar themes, emotions, and storytelling styles.',
+      badge: 'NLP-Powered',
+      badgeColor: 'bg-blue-500'
+    },
+    similar_artists: {
+      name: '🎤 Similar Artists',
+      description: 'More songs by artists you already like',
+      details: 'Simple but effective - finds more music from the same artists in your liked songs. Great for exploring an artist\'s catalog.',
+      badge: 'Simple',
+      badgeColor: 'bg-green-500'
+    },
+    similar_genres: {
+      name: '🎶 Musical Styles',
+      description: 'Songs from similar genres and musical styles',
+      details: 'Groups songs by audio characteristics to find music from similar genres and subgenres. Good for staying within familiar styles.',
+      badge: 'Genre-Based',
+      badgeColor: 'bg-orange-500'
+    },
+    cluster_based: {
+      name: '🎯 Music Clusters',
+      description: 'Database-based clustering recommendations',
+      details: 'Uses pre-computed music clusters from the database. Fast but less personalized than ML approaches.',
+      badge: 'Fast',
+      badgeColor: 'bg-gray-500'
     }
   };
 
-  const currentRecs = getCurrentRecommendations();
+  const currentApproach = approaches[selectedApproach as keyof typeof approaches];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold text-green-400">Your Recommendations</h2>
-        
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={`space-y-6 transition-all duration-300 ${isSidebarOpen ? 'mr-80' : ''}`}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold text-green-400">Your Recommendations</h2>
+          
+          {likedSongIds.length > 0 && (
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-400">Count:</span>
+                <select
+                  value={recommendationCount}
+                  onChange={(e) => setRecommendationCount(Number(e.target.value))}
+                  className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-white text-sm focus:outline-none focus:border-green-500"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={30}>30</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+
         {likedSongIds.length > 0 && (
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-400">Count:</span>
-              <select
-                value={recommendationCount}
-                onChange={(e) => setRecommendationCount(Number(e.target.value))}
-                className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-white text-sm focus:outline-none focus:border-green-500"
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={30}>30</option>
-                <option value={50}>50</option>
-              </select>
+          <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-green-400">Choose Your Recommendation Approach</h3>
+                <p className="text-gray-300 text-sm mb-4">
+                  Each approach finds similar music in a different way. Pick the one that matches how you want to discover new songs.
+                </p>
+              </div>
+              
+              {/* Approach Selection */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                {Object.entries(approaches).map(([key, approach]) => (
+                  <div
+                    key={key}
+                    onClick={() => setSelectedApproach(key)}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                      selectedApproach === key
+                        ? 'border-green-500 bg-green-500/10 shadow-lg'
+                        : 'border-gray-700 hover:border-gray-600 bg-gray-800/30'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-white">{approach.name}</h4>
+                        <span className={`text-xs px-2 py-1 rounded-full text-white ${approach.badgeColor}`}>
+                          {approach.badge}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-300">{approach.description}</p>
+                      <p className="text-xs text-gray-400">{approach.details}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Lyrics Model Selection (only shown for lyrics approach) */}
+              {selectedApproach === 'lyrics_similarity' && (
+                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-blue-300 mb-3">Choose Lyrics Analysis Method</h4>
+                  <p className="text-xs text-gray-400 mb-4">
+                    Each method analyzes lyrics differently. Compare them to see which works best for your music taste.
+                  </p>
+                  <div className="space-y-3">
+                    {modelsLoading ? (
+                      <div className="text-gray-400 text-sm">Loading lyrics analysis models...</div>
+                    ) : modelsError ? (
+                      <div className="text-red-400 text-sm">Error loading lyrics models</div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div
+                          onClick={() => setSelectedLyricsModel('svd_knn')}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedLyricsModel === 'svd_knn'
+                              ? 'border-blue-500 bg-blue-500/10'
+                              : 'border-gray-600 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-lg">🔬</span>
+                            <div>
+                              <h5 className="font-medium text-blue-300">SVD + KNN</h5>
+                              <span className="text-xs text-green-400 bg-green-400/20 px-2 py-0.5 rounded-full">Recommended</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Advanced dimensionality reduction + similarity matching. Best overall performance for finding lyrically similar songs.
+                          </p>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedLyricsModel('knn_cosine')}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedLyricsModel === 'knn_cosine'
+                              ? 'border-blue-500 bg-blue-500/10'
+                              : 'border-gray-600 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-lg">📐</span>
+                            <div>
+                              <h5 className="font-medium text-blue-300">KNN Cosine</h5>
+                              <span className="text-xs text-blue-400 bg-blue-400/20 px-2 py-0.5 rounded-full">Semantic</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Cosine similarity for thematic matching. Good at finding songs with similar meaning and topics.
+                          </p>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedLyricsModel('knn_euclidean')}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedLyricsModel === 'knn_euclidean'
+                              ? 'border-blue-500 bg-blue-500/10'
+                              : 'border-gray-600 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-lg">📏</span>
+                            <div>
+                              <h5 className="font-medium text-blue-300">KNN Euclidean</h5>
+                              <span className="text-xs text-orange-400 bg-orange-400/20 px-2 py-0.5 rounded-full">Precise</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Euclidean distance for exact word matching. More literal similarity, good for specific word patterns.
+                          </p>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedLyricsModel('knn_cosine_k20')}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedLyricsModel === 'knn_cosine_k20'
+                              ? 'border-blue-500 bg-blue-500/10'
+                              : 'border-gray-600 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-lg">🎯</span>
+                            <div>
+                              <h5 className="font-medium text-blue-300">KNN Cosine (K=20)</h5>
+                              <span className="text-xs text-purple-400 bg-purple-400/20 px-2 py-0.5 rounded-full">Diverse</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Cosine similarity with more neighbors. Provides more diverse results, good for exploration.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Current Model Status */}
+                    <div className="bg-gray-800/50 rounded-lg p-3 mt-4">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-2 h-2 rounded-full ${isModelSwitching ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`}></div>
+                        <span className="text-sm text-gray-300">
+                          {isModelSwitching ? (
+                            <span className="text-yellow-300">Switching model...</span>
+                          ) : (
+                            <>
+                              Current: <span className="text-blue-300 font-medium">
+                                {selectedLyricsModel === 'svd_knn' ? 'SVD + KNN (Recommended)' :
+                                 selectedLyricsModel === 'knn_cosine' ? 'KNN Cosine Distance' :
+                                 selectedLyricsModel === 'knn_euclidean' ? 'KNN Euclidean Distance' :
+                                 selectedLyricsModel === 'knn_cosine_k20' ? 'KNN Cosine (K=20)' :
+                                 selectedLyricsModel}
+                              </span>
+                            </>
+                          )}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {isModelSwitching ? 
+                          'Please wait while the model is being loaded...' :
+                          'Try different methods to see how they affect your recommendations!'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Current Selection Summary */}
+              <div className="bg-gray-800/50 rounded-lg p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="text-2xl">{currentApproach.name.split(' ')[0]}</div>
+                  <div>
+                    <h4 className="font-medium text-white">Using: {currentApproach.name}</h4>
+                    <p className="text-sm text-gray-400">{currentApproach.description}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
-      </div>
-
-      {likedSongIds.length > 0 && (
-        <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
-          <h3 className="text-lg font-semibold mb-4 text-green-400">Recommendation Settings</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Strategy Selection */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Recommendation Strategy</label>
-              <select
-                value={selectedStrategy}
-                onChange={(e) => setSelectedStrategy(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-green-500"
-              >
-                <option value="cluster">🎯 Cluster-Based (ML)</option>
-                <option value="hdbscan_knn">🔬 HDBSCAN + KNN</option>
-                <option value="lyrics">📝 Lyrics Similarity</option>
-                <option value="similar_artists">🎤 Similar Artists</option>
-                <option value="genre_based">🎵 Genre-Based</option>
-              </select>
-              <p className="text-xs text-gray-400">
-                {selectedStrategy === 'cluster' && 'Uses trained ML models to find similar songs based on audio features'}
-                {selectedStrategy === 'hdbscan_knn' && 'Uses HDBSCAN clustering + KNN for high-quality audio feature similarity'}
-                {selectedStrategy === 'lyrics' && 'Finds songs with similar lyrical content and themes'}
-                {selectedStrategy === 'similar_artists' && 'Recommends more songs by artists you already like'}
-                {selectedStrategy === 'genre_based' && 'Discovers songs from similar genres and styles'}
-              </p>
-            </div>
-
-            {/* Model Selection (only for ML strategies) */}
-            {(selectedStrategy === 'cluster' || selectedStrategy === 'hdbscan_knn' || selectedStrategy === 'lyrics') && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">ML Model</label>
-                {modelsLoading ? (
-                  <div className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-400">
-                    Loading models...
-                  </div>
-                ) : modelsError ? (
-                  <div className="w-full bg-red-900/20 border border-red-500/30 rounded-lg px-3 py-2 text-red-400">
-                    Error loading models
-                  </div>
-                ) : (
-                  <select
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-green-500"
-                  >
-                    {(availableModels?.available_models || ['svd_knn', 'knn_cosine', 'knn_euclidean', 'knn_cosine_k20']).map((model: string) => (
-                      <option key={model} value={model}>
-                        {model === 'svd_knn' && '🔬 SVD + KNN (Best)'}
-                        {model === 'knn_cosine' && '📐 KNN Cosine'}
-                        {model === 'knn_euclidean' && '📏 KNN Euclidean'}
-                        {model === 'knn_cosine_k20' && '🎯 KNN Cosine (K=20)'}
-                        {model === 'hdbscan_knn' && '🔬 HDBSCAN + KNN'}
-                        {model === 'cluster' && '🎯 Cluster-Based'}
-                        {!['svd_knn', 'knn_cosine', 'knn_euclidean', 'knn_cosine_k20', 'hdbscan_knn', 'cluster'].includes(model) && `🤖 ${model}`}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                <p className="text-xs text-gray-400">
-                  {selectedModel === 'svd_knn' && 'Dimensionality reduction + K-Nearest Neighbors (recommended)'}
-                  {selectedModel.includes('knn_cosine') && 'K-Nearest Neighbors with cosine similarity'}
-                  {selectedModel === 'knn_euclidean' && 'K-Nearest Neighbors with euclidean distance'}
-                  {selectedModel === 'hdbscan_knn' && 'HDBSCAN clustering with K-Nearest Neighbors'}
-                  {selectedModel === 'cluster' && 'Traditional cluster-based recommendations'}
-                </p>
-              </div>
-            )}
-
-            {/* Current Model Info */}
-            {(selectedStrategy === 'cluster' || selectedStrategy === 'hdbscan_knn' || selectedStrategy === 'lyrics') && availableModels?.current_model && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">Current Model Status</label>
-                <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3">
-                  <div className="text-sm text-green-400 font-medium">
-                    ✅ {availableModels.current_model.model_name}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    Type: {availableModels.current_model.model_type}
-                    {availableModels.current_model.has_svd && ' • SVD Enhanced'}
-                  </div>
-                  {availableModels.current_model.vocabulary_size && (
-                    <div className="text-xs text-gray-400">
-                      Vocab: {availableModels.current_model.vocabulary_size.toLocaleString()} terms
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+        
+        <LikedSongsBar
+          likedSongs={likedSongs || []}
+          onRemoveSong={(songId) => {
+            const newLikedSongIds = likedSongIds.filter(id => id !== songId);
+            setLikedSongIds(newLikedSongIds);
+            localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
+          }}
+          onClearAll={() => {
+            setLikedSongIds([]);
+            localStorage.setItem('likedSongs', JSON.stringify([]));
+            setIsSidebarOpen(false);
+          }}
+        />
+        
+        {likedSongIds.length === 0 ? (
+          <div className="space-y-6">
+            <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-8 border border-gray-800 text-center">
+              <h3 className="text-xl font-semibold mb-4">Get Started</h3>
+              <p className="text-gray-300 mb-6">
+                Like some songs below to get personalized recommendations based on your taste.
+          </p>
         </div>
-      )}
-      
-      <LikedSongsBar
-        likedSongs={likedSongs || []}
+            
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Popular Songs</h3>
+              {popularSongs && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {popularSongs.map((song) => (
+                    <SongCard
+                      key={song.id}
+                      song={song}
+                      onLike={(songId) => {
+                        const newLikedSongIds = [...likedSongIds, songId];
+                        setLikedSongIds(newLikedSongIds);
+                        localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
+                      }}
+                      isLiked={likedSongIds.includes(song.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-semibold">{currentApproach.name} Recommendations</h3>
+                <span className="text-sm text-gray-400">
+                  {recommendations?.recommendations?.length || 0} songs • Based on {likedSongIds.length} liked songs
+                </span>
+              </div>
+              <p className="text-gray-300">{currentApproach.details}</p>
+              {recommendations?.processing_time_ms && (
+                <div className="text-xs text-gray-500 mt-2">
+                  Generated in {recommendations.processing_time_ms.toFixed(1)}ms
+                </div>
+              )}
+              
+              {(isLoading || isModelSwitching) && (
+                <div className="text-center py-8">
+                  <div className="flex items-center justify-center space-x-3">
+                    <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-lg text-gray-300">
+                      {isModelSwitching ? 'Switching model...' : 'Loading recommendations...'}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {error && <div className="text-red-400 text-center py-8">Error loading recommendations</div>}
+              
+              {!isLoading && !isModelSwitching && recommendations?.recommendations && recommendations.recommendations.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {recommendations.recommendations.map((song) => (
+                    <SongCard
+                      key={song.id}
+                      song={song}
+                      onLike={(songId) => {
+                          const newLikedSongIds = [...likedSongIds, songId];
+                          setLikedSongIds(newLikedSongIds);
+                          localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
+                        }}
+                      isLiked={likedSongIds.includes(song.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Base Songs Sidebar */}
+      <BaseSongsSidebar
+        baseSongs={likedSongs || []}
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         onRemoveSong={(songId) => {
           const newLikedSongIds = likedSongIds.filter(id => id !== songId);
           setLikedSongIds(newLikedSongIds);
@@ -639,89 +1034,10 @@ function RecommendationsPage() {
         onClearAll={() => {
           setLikedSongIds([]);
           localStorage.setItem('likedSongs', JSON.stringify([]));
+          setIsSidebarOpen(false);
         }}
       />
-      
-      {likedSongIds.length === 0 ? (
-        <div className="space-y-6">
-          <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-8 border border-gray-800 text-center">
-            <h3 className="text-xl font-semibold mb-4">Get Started</h3>
-            <p className="text-gray-300 mb-6">
-              Like some songs below to get personalized recommendations based on your taste.
-        </p>
-      </div>
-          
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Popular Songs</h3>
-            {popularSongs && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {popularSongs.map((song) => (
-                  <SongCard
-                    key={song.id}
-                    song={song}
-                    onLike={(songId) => {
-                      const newLikedSongIds = [...likedSongIds, songId];
-                      setLikedSongIds(newLikedSongIds);
-                      localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
-                    }}
-                    isLiked={likedSongIds.includes(song.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-800">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold">
-                {selectedStrategy === 'cluster' && '🎯 Cluster-Based Recommendations'}
-                {selectedStrategy === 'hdbscan_knn' && '🔬 HDBSCAN + KNN Recommendations'}
-                {selectedStrategy === 'lyrics' && '📝 Lyrics-Based Recommendations'}
-                {selectedStrategy === 'similar_artists' && '🎤 Similar Artists Recommendations'}
-                {selectedStrategy === 'genre_based' && '🎵 Genre-Based Recommendations'}
-              </h3>
-              <span className="text-sm text-gray-400">
-                {currentRecs.recommendations.length} songs • Based on {likedSongIds.length} liked songs
-              </span>
-            </div>
-            <p className="text-gray-300">
-              {selectedStrategy === 'cluster' && `Using ${selectedModel} model to find songs with similar audio features and patterns.`}
-              {selectedStrategy === 'hdbscan_knn' && 'Using trained HDBSCAN clustering and KNN models for precise audio feature similarity.'}
-              {selectedStrategy === 'lyrics' && `Using ${selectedModel} model to find songs with similar lyrical themes and content.`}
-              {selectedStrategy === 'similar_artists' && 'Discovering more music from artists you already enjoy.'}
-              {selectedStrategy === 'genre_based' && 'Exploring songs from similar genres and musical styles.'}
-            </p>
-            {currentRecs.processingTime && (
-              <div className="text-xs text-gray-500 mt-2">
-                Generated in {currentRecs.processingTime.toFixed(1)}ms
-              </div>
-            )}
-          </div>
-          
-          {currentRecs.isLoading && <div className="text-center py-8">Loading recommendations...</div>}
-          {currentRecs.error && <div className="text-red-400 text-center py-8">Error loading recommendations</div>}
-          
-          {currentRecs.recommendations.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {currentRecs.recommendations.map((song) => (
-                <SongCard
-                  key={song.id}
-                  song={song}
-                  onLike={(songId) => {
-                      const newLikedSongIds = [...likedSongIds, songId];
-                      setLikedSongIds(newLikedSongIds);
-                      localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
-                    }}
-                  isLiked={likedSongIds.includes(song.id)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </motion.div>
+    </>
   );
 }
 
@@ -1071,7 +1387,10 @@ function SongCard({ song, onLike, onSelect, isLiked }: {
           {song.similarity_score && (
             <div className="flex items-center justify-center">
               <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                {Math.round(song.similarity_score * 100)}% match
+                {song.similarity_score > 10 ? 
+                  `${Math.round(song.similarity_score)}% match` : 
+                  `${song.similarity_score.toFixed(3)} distance`
+                }
               </div>
             </div>
           )}
@@ -1279,11 +1598,14 @@ function FeatureCard({ icon, title, description }: {
 // Model Comparison Page Component
 function ModelComparisonPage() {
   const [likedSongs, setLikedSongs] = React.useState<Song[]>([]);
-  const [selectedModels, setSelectedModels] = React.useState<string[]>(['cluster', 'lyrics']);
+  const [selectedApproaches, setSelectedApproaches] = React.useState<string[]>(['audio_similarity', 'lyrics_similarity']);
+  const [selectedLyricsModel, setSelectedLyricsModel] = React.useState<string>('svd_knn');
   const [comparisonResults, setComparisonResults] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isModelSwitching, setIsModelSwitching] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState<boolean>(false);
   const { playTrack } = useAudio();
 
   // Search songs for adding to liked songs
@@ -1293,9 +1615,43 @@ function ModelComparisonPage() {
     enabled: searchQuery.length > 2
   });
 
+  // Define the available approaches for comparison
+  const approaches = {
+    audio_similarity: {
+      name: '🎵 Audio Features',
+      description: 'ML-powered audio analysis',
+      details: 'Uses advanced machine learning to analyze musical characteristics',
+      modelType: 'hdbscan_knn'
+    },
+    lyrics_similarity: {
+      name: '📝 Lyrics Analysis', 
+      description: 'NLP-powered lyrics analysis',
+      details: 'Analyzes lyrics using natural language processing',
+      modelType: 'lyrics'
+    },
+    similar_artists: {
+      name: '🎤 Similar Artists',
+      description: 'Artist-based matching',
+      details: 'Finds more music from the same artists',
+      modelType: 'artist_based'
+    },
+    similar_genres: {
+      name: '🎶 Musical Styles',
+      description: 'Genre-based grouping',
+      details: 'Groups songs by musical styles and genres',
+      modelType: 'genre_based'
+    },
+    cluster_based: {
+      name: '🎯 Database Clusters',
+      description: 'Pre-computed clustering',
+      details: 'Uses database-stored music clusters',
+      modelType: 'cluster'
+    }
+  };
+
   const handleCompareModels = async () => {
-    if (selectedModels.length === 0 || likedSongs.length === 0) {
-      setError('Please select at least one model and one song');
+    if (selectedApproaches.length === 0 || likedSongs.length === 0) {
+      setError('Please select at least one approach and one song');
       return;
     }
 
@@ -1303,14 +1659,29 @@ function ModelComparisonPage() {
     setError(null);
 
     try {
+      // Switch to selected lyrics model if lyrics approach is selected
+      if (selectedApproaches.includes('lyrics_similarity')) {
+        setIsModelSwitching(true);
+        await apiService.recommendations.switchModel(selectedLyricsModel);
+        // Small delay to ensure model is fully loaded
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setIsModelSwitching(false);
+      }
+
+      // Map approaches to their backend model types
+      const modelsToCompare = selectedApproaches.map(approach => 
+        approaches[approach as keyof typeof approaches]?.modelType || approach
+      );
+
       const response = await apiService.recommendations.compare({
         liked_song_ids: likedSongs.map(s => s.id),
-        models_to_compare: selectedModels,
+        models_to_compare: modelsToCompare,
         n_recommendations: 10
       });
       setComparisonResults(response);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to compare models');
+      setIsModelSwitching(false);
     } finally {
       setIsLoading(false);
     }
@@ -1326,221 +1697,347 @@ function ModelComparisonPage() {
     setLikedSongs(likedSongs.filter(s => s.id !== songId));
   };
 
-  const getModelColor = (modelType: string): string => {
-    const colors = { cluster: '#1DB954', lyrics: '#FF6B6B', global: '#4ECDC4', hybrid: '#45B7D1' };
-    return colors[modelType as keyof typeof colors] || '#6B7280';
-  };
-
-  const getModelIcon = (modelType: string): string => {
-    const icons = { cluster: '🎵', lyrics: '📝', global: '🌍', hybrid: '🔀' };
-    return icons[modelType as keyof typeof icons] || '🎯';
+  const getApproachColor = (approachKey: string): string => {
+    const colors = { 
+      audio_similarity: '#8B5CF6', 
+      lyrics_similarity: '#3B82F6', 
+      similar_artists: '#10B981', 
+      similar_genres: '#F59E0B',
+      cluster_based: '#6B7280'
+    };
+    return colors[approachKey as keyof typeof colors] || '#6B7280';
   };
 
   return (
-    <div className="space-y-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center"
-      >
-        <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
-          Model Comparison
-        </h1>
-        <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-          Compare different recommendation models to see how they perform with your music taste.
-        </p>
-      </motion.div>
+    <>
+      <div className={`space-y-8 transition-all duration-300 ${isSidebarOpen ? 'mr-80' : ''}`}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
+            Recommendation Approach Comparison
+          </h1>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Compare different recommendation approaches to see how they perform with your music taste.
+          </p>
+        </motion.div>
 
-      {/* Search and Add Songs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-800"
-      >
-        <h2 className="text-xl font-semibold mb-4">Add Songs for Comparison</h2>
-        <div className="relative mb-4">
-          <input
-            type="text"
-            placeholder="Search for songs to add..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
-          />
-          {isSearching && (
-            <div className="absolute right-3 top-3">
-              <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-        </div>
-
-        {searchResults && searchResults.length > 0 && (
-          <div className="space-y-2 mb-4">
-            {searchResults.map((song) => (
-              <div key={song.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                <div>
-                  <h4 className="font-medium">{song.name}</h4>
-                  <p className="text-sm text-gray-400">{song.artist}</p>
-                </div>
-                <button
-                  onClick={() => addLikedSong(song)}
-                  disabled={likedSongs.find(s => s.id === song.id) !== undefined}
-                  className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm"
-                >
-                  {likedSongs.find(s => s.id === song.id) ? 'Added' : 'Add'}
-                </button>
+        {/* Search and Add Songs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-800"
+        >
+          <h2 className="text-xl font-semibold mb-4">Add Songs for Comparison</h2>
+          <div className="relative mb-4">
+            <input
+              type="text"
+              placeholder="Search for songs to add..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
+            />
+            {isSearching && (
+              <div className="absolute right-3 top-3">
+                <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
               </div>
-            ))}
+            )}
           </div>
-        )}
 
-        {/* Liked Songs Display */}
-        {likedSongs.length > 0 && (
-          <div>
-            <h3 className="font-semibold mb-3">Selected Songs ({likedSongs.length})</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {likedSongs.map((song) => (
+          {searchResults && searchResults.length > 0 && (
+            <div className="space-y-2 mb-4">
+              {searchResults.map((song) => (
                 <div key={song.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium truncate">{song.name}</h4>
-                    <p className="text-sm text-gray-400 truncate">{song.artist}</p>
+                  <div>
+                    <h4 className="font-medium">{song.name}</h4>
+                    <p className="text-sm text-gray-400">{song.artist}</p>
                   </div>
                   <button
-                    onClick={() => removeLikedSong(song.id)}
-                    className="ml-2 text-red-400 hover:text-red-300"
+                    onClick={() => addLikedSong(song)}
+                    disabled={likedSongs.find(s => s.id === song.id) !== undefined}
+                    className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm"
                   >
-                    ×
+                    {likedSongs.find(s => s.id === song.id) ? 'Added' : 'Add'}
                   </button>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-      </motion.div>
+          )}
 
-      {/* Model Selection */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-800"
-      >
-        <h2 className="text-xl font-semibold mb-4">Select Models to Compare</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {['cluster', 'lyrics', 'global', 'hybrid'].map((model) => (
-            <div
-              key={model}
-              onClick={() => {
-                if (selectedModels.includes(model)) {
-                  setSelectedModels(selectedModels.filter(m => m !== model));
-                } else {
-                  setSelectedModels([...selectedModels, model]);
-                }
-              }}
-              className={clsx(
-                'p-4 border-2 rounded-lg cursor-pointer transition-all',
-                selectedModels.includes(model)
-                  ? 'border-green-500 bg-green-500/10'
-                  : 'border-gray-700 hover:border-gray-600'
-              )}
-            >
-              <div className="flex items-center space-x-3">
-                <div className="text-2xl">{getModelIcon(model)}</div>
-                <div>
-                  <h3 className="font-semibold capitalize">{model}</h3>
-                  <p className="text-sm text-gray-400">
-                    {model === 'cluster' && 'Audio feature clustering'}
-                    {model === 'lyrics' && 'Lyrical content similarity'}
-                    {model === 'global' && 'Global recommendations'}
-                    {model === 'hybrid' && 'Combined approach'}
-                  </p>
-                </div>
+          {/* Liked Songs Display */}
+          {likedSongs.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-3">Selected Songs ({likedSongs.length})</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {likedSongs.map((song) => (
+                  <div key={song.id} className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-medium truncate">{song.name}</h4>
+                      <p className="text-sm text-gray-400 truncate">{song.artist}</p>
+                    </div>
+                    <button
+                      onClick={() => removeLikedSong(song.id)}
+                      className="ml-2 text-red-400 hover:text-red-300"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
-      </motion.div>
+          )}
+        </motion.div>
 
-      {/* Compare Button */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="text-center"
-      >
-        <button
-          onClick={handleCompareModels}
-          disabled={isLoading || selectedModels.length === 0 || likedSongs.length === 0}
-          className="px-8 py-3 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-lg transition-all"
-        >
-          {isLoading ? 'Comparing Models...' : 'Compare Models'}
-        </button>
-        {error && (
-          <p className="mt-2 text-red-400">{error}</p>
-        )}
-      </motion.div>
-
-      {/* Comparison Results */}
-      {comparisonResults && (
+        {/* Approach Selection */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          transition={{ delay: 0.2 }}
+          className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-gray-800"
         >
-          <h2 className="text-2xl font-bold text-center">Comparison Results</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {comparisonResults.results.map((result: any) => (
-              <div key={result.model_type} className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-gray-800 overflow-hidden">
-                <div 
-                  className="p-4 text-white"
-                  style={{ backgroundColor: `${getModelColor(result.model_type)}20` }}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="text-2xl">{getModelIcon(result.model_type)}</div>
-                    <div>
-                      <h3 className="font-semibold text-lg capitalize">{result.model_type} Model</h3>
-                      <p className="text-sm opacity-80">
-                        {result.total_found} recommendations in {result.processing_time_ms.toFixed(1)}ms
-                      </p>
-                    </div>
+          <h2 className="text-xl font-semibold mb-4">Select Approaches to Compare</h2>
+          <p className="text-gray-300 mb-6">Choose multiple approaches to see how they perform differently with your selected songs.</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(approaches).map(([key, approach]) => (
+              <div
+                key={key}
+                onClick={() => {
+                  if (selectedApproaches.includes(key)) {
+                    setSelectedApproaches(selectedApproaches.filter(a => a !== key));
+                  } else {
+                    setSelectedApproaches([...selectedApproaches, key]);
+                  }
+                }}
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  selectedApproaches.includes(key)
+                    ? 'border-green-500 bg-green-500/10 shadow-lg'
+                    : 'border-gray-700 hover:border-gray-600'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="text-2xl">{approach.name.split(' ')[0]}</div>
+                  <div>
+                    <h3 className="font-semibold">{approach.name}</h3>
+                    <p className="text-sm text-gray-400">{approach.description}</p>
+                    <p className="text-xs text-gray-500 mt-1">{approach.details}</p>
                   </div>
                 </div>
-                <div className="p-4">
-                  {result.error ? (
-                    <div className="text-red-400 text-center py-8">
-                      Error: {result.error}
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {result.recommendations.slice(0, 5).map((song: Song, index: number) => (
-                        <div key={song.id} className="flex items-center space-x-3 p-2 hover:bg-gray-800 rounded">
-                          <span className="text-gray-400 text-sm w-6">{index + 1}</span>
-                          <div className="flex-1">
-                            <h4 className="font-medium truncate">{song.name}</h4>
-                            <p className="text-sm text-gray-400 truncate">{song.artist}</p>
-                          </div>
-                          {song.similarity_score && (
-                            <span className="text-xs bg-gray-700 px-2 py-1 rounded">
-                              {(song.similarity_score * 100).toFixed(0)}%
-                            </span>
-                          )}
-                          <button
-                            onClick={() => playTrack(song)}
-                            className="p-1 text-gray-400 hover:text-white"
-                          >
-                            <Play className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {selectedApproaches.includes(key) && (
+                  <div className="mt-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full ml-auto"></div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
+          
+          {/* Compare Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-center"
+          >
+            <button
+              onClick={handleCompareModels}
+              disabled={isLoading || isModelSwitching || selectedApproaches.length === 0 || likedSongs.length === 0}
+              className="px-8 py-3 bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold text-lg transition-all"
+            >
+              {isModelSwitching ? 'Switching Model...' : isLoading ? 'Comparing Approaches...' : 'Compare Approaches'}
+            </button>
+            {selectedApproaches.length > 0 && likedSongs.length > 0 && (
+              <p className="mt-2 text-sm text-gray-400">
+                Comparing {selectedApproaches.length} approach{selectedApproaches.length > 1 ? 'es' : ''} with {likedSongs.length} song{likedSongs.length > 1 ? 's' : ''}
+              </p>
+            )}
+            {error && (
+              <p className="mt-2 text-red-400">{error}</p>
+            )}
+          </motion.div>
+
+          {/* Comparison Results */}
+          {comparisonResults && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-8"
+            >
+              <h2 className="text-2xl font-bold text-center">Comparison Results</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {comparisonResults.results.map((result: any) => {
+                  // Map backend model type back to approach
+                  const approachKey = Object.keys(approaches).find(key => 
+                    approaches[key as keyof typeof approaches].modelType === result.model_type
+                  ) || result.model_type;
+                  
+                  const approach = approaches[approachKey as keyof typeof approaches] || {
+                    name: result.model_type,
+                    description: 'Unknown approach',
+                    details: ''
+                  };
+
+                  return (
+                    <div key={result.model_type} className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-gray-800 overflow-hidden">
+                      <div 
+                        className="p-4 text-white"
+                        style={{ backgroundColor: `${getApproachColor(approachKey)}20` }}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="text-2xl">{approach.name.split(' ')[0] || '🎯'}</div>
+                          <div>
+                            <h3 className="font-semibold text-lg">{approach.name}</h3>
+                            <p className="text-sm opacity-80">
+                              {result.total_found} recommendations in {result.processing_time_ms.toFixed(1)}ms
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        {result.error ? (
+                          <div className="text-red-400 text-center py-8">
+                            Error: {result.error}
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {result.recommendations.slice(0, 5).map((song: Song, index: number) => (
+                              <div key={song.id} className="flex items-center space-x-3 p-2 hover:bg-gray-800 rounded">
+                                <span className="text-gray-400 text-sm w-6">{index + 1}</span>
+                                <div className="flex-1">
+                                  <h4 className="font-medium truncate">{song.name}</h4>
+                                  <p className="text-sm text-gray-400 truncate">{song.artist}</p>
+                                </div>
+                                {song.similarity_score && (
+                                  <span className="text-xs bg-gray-700 px-2 py-1 rounded">
+                                    {song.similarity_score > 10 ? 
+                                      `${Math.round(song.similarity_score)}% match` : 
+                                      `${song.similarity_score.toFixed(3)} distance`
+                                    }
+                                  </span>
+                                )}
+                                <button
+                                  onClick={() => playTrack(song)}
+                                  className="p-1 text-gray-400 hover:text-white"
+                                >
+                                  <Play className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
         </motion.div>
-      )}
-    </div>
+
+        {/* Lyrics Model Selection (shown when lyrics approach is selected) */}
+        {selectedApproaches.includes('lyrics_similarity') && (
+          <div className="mt-6 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-blue-300 mb-3">Lyrics Analysis Method</h4>
+            <p className="text-xs text-gray-400 mb-4">
+              Choose which lyrics analysis method to use in the comparison. Each method has different strengths.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div
+                onClick={() => setSelectedLyricsModel('svd_knn')}
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  selectedLyricsModel === 'svd_knn'
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-sm">🔬</span>
+                  <h5 className="text-sm font-medium text-blue-300">SVD + KNN</h5>
+                  <span className="text-xs text-green-400 bg-green-400/20 px-1.5 py-0.5 rounded-full">Best</span>
+                </div>
+                <p className="text-xs text-gray-400">Advanced dimensionality reduction</p>
+              </div>
+
+              <div
+                onClick={() => setSelectedLyricsModel('knn_cosine')}
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  selectedLyricsModel === 'knn_cosine'
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-sm">📐</span>
+                  <h5 className="text-sm font-medium text-blue-300">KNN Cosine</h5>
+                  <span className="text-xs text-blue-400 bg-blue-400/20 px-1.5 py-0.5 rounded-full">Semantic</span>
+                </div>
+                <p className="text-xs text-gray-400">Thematic similarity matching</p>
+              </div>
+
+              <div
+                onClick={() => setSelectedLyricsModel('knn_euclidean')}
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  selectedLyricsModel === 'knn_euclidean'
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-sm">📏</span>
+                  <h5 className="text-sm font-medium text-blue-300">KNN Euclidean</h5>
+                  <span className="text-xs text-orange-400 bg-orange-400/20 px-1.5 py-0.5 rounded-full">Precise</span>
+                </div>
+                <p className="text-xs text-gray-400">Exact word pattern matching</p>
+              </div>
+
+              <div
+                onClick={() => setSelectedLyricsModel('knn_cosine_k20')}
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  selectedLyricsModel === 'knn_cosine_k20'
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-sm">🎯</span>
+                  <h5 className="text-sm font-medium text-blue-300">KNN Cosine (K=20)</h5>
+                  <span className="text-xs text-purple-400 bg-purple-400/20 px-1.5 py-0.5 rounded-full">Diverse</span>
+                </div>
+                <p className="text-xs text-gray-400">More diverse recommendations</p>
+              </div>
+            </div>
+            
+            <div className="mt-3 text-center">
+              <span className="text-xs text-gray-400">
+                Current: <span className="text-blue-300 font-medium">
+                  {selectedLyricsModel === 'svd_knn' ? 'SVD + KNN' :
+                   selectedLyricsModel === 'knn_cosine' ? 'KNN Cosine' :
+                   selectedLyricsModel === 'knn_euclidean' ? 'KNN Euclidean' :
+                   selectedLyricsModel === 'knn_cosine_k20' ? 'KNN Cosine (K=20)' :
+                   selectedLyricsModel}
+                </span>
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Base Songs Sidebar */}
+      <BaseSongsSidebar
+        baseSongs={likedSongs}
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        onRemoveSong={removeLikedSong}
+        onClearAll={() => {
+          setLikedSongs([]);
+          setIsSidebarOpen(false);
+        }}
+      />
+    </>
   );
 }
 
@@ -1670,7 +2167,10 @@ function SongInfoPanel({ song, onClose }: {
               <div className="flex items-center justify-between">
                 <span className="text-gray-300">Match Score</span>
                 <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm px-3 py-1 rounded-full font-medium">
-                  {Math.round(song.similarity_score * 100)}%
+                  {song.similarity_score > 10 ? 
+                    `${Math.round(song.similarity_score)}% match` : 
+                    `${song.similarity_score.toFixed(3)} distance`
+                  }
                 </div>
               </div>
             )}
