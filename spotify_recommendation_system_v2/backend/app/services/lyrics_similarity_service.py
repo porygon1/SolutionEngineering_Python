@@ -80,8 +80,8 @@ class CompatibleLyricsSimilarityModel:
         else:
             distances, indices = self.model.kneighbors(query_vector, n_neighbors=k)
             
-        similarities = 1 - distances[0]  # Convert distance to similarity
-        return indices[0].tolist(), similarities.tolist()
+        # Return actual distances instead of converting to similarities
+        return indices[0].tolist(), distances[0].tolist()
         
     def preprocess_lyrics(self, text: str) -> str:
         """Preprocess lyrics using the same method as training"""
@@ -308,18 +308,18 @@ class LyricsSimilarityService:
             lyrics_vector = self.current_model.vectorizer.transform([processed_lyrics])
             
             # Find similar songs based on model type
-            similar_indices, similarities = self.current_model.find_similar(lyrics_vector, k=k)
+            similar_indices, distances = self.current_model.find_similar(lyrics_vector, k=k)
             
             # Format results
             results = []
-            for idx, similarity in zip(similar_indices, similarities):
+            for idx, distance in zip(similar_indices, distances):
                 if idx < len(self.current_model.metadata['training_songs']):
                     song_info = self.current_model.metadata['training_songs'][idx]
                     results.append({
                         'track_id': song_info['id'],
                         'name': song_info['name'],
                         'artist': song_info['artists_id'],
-                        'similarity_score': float(similarity)
+                        'similarity_score': float(distance)  # Using distance as score (lower is better)
                     })
             
             # Enrich with database information if available

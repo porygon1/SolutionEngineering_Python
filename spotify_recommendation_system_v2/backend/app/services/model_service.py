@@ -192,11 +192,11 @@ class ModelService:
                             'source_song': song_id
                         })
             
-            # Remove duplicates and sort by similarity
+            # Remove duplicates and sort by distance (lower is better)
             seen_tracks = set()
             unique_recommendations = []
             
-            for rec in sorted(all_recommendations, key=lambda x: x['similarity_score'], reverse=True):
+            for rec in sorted(all_recommendations, key=lambda x: x['similarity_score']):  # Sort by distance ascending (lower is better)
                 if rec['track_id'] not in seen_tracks:
                     unique_recommendations.append(rec)
                     seen_tracks.add(rec['track_id'])
@@ -296,10 +296,11 @@ class ModelService:
                     rec_song_id = self.index_to_track_id[rec_idx]
                     
                     if rec_song_id not in request.liked_song_ids:
-                        similarity_score = 1.0 - dist  # Convert distance to similarity
+                        # Use actual distance as the score instead of converting to similarity
+                        distance_score = float(dist)
                         all_recommendations.append({
                             'song_id': rec_song_id,
-                            'similarity_score': float(similarity_score),
+                            'similarity_score': distance_score,  # This is now actually distance
                             'distance': float(dist),
                             'source_song': song_id,
                             'cluster_id': int(self.cluster_labels[rec_idx])
@@ -314,11 +315,11 @@ class ModelService:
                         source_song=song_id
                     ))
             
-            # Remove duplicates and sort by similarity
+            # Remove duplicates and sort by distance (lower is better)
             seen_songs = set()
             unique_recommendations = []
             
-            for rec in sorted(all_recommendations, key=lambda x: x['similarity_score'], reverse=True):
+            for rec in sorted(all_recommendations, key=lambda x: x['similarity_score']):  # Sort by distance ascending (lower is better)
                 if rec['song_id'] not in seen_songs:
                     seen_songs.add(rec['song_id'])
                     unique_recommendations.append(rec)
@@ -428,11 +429,12 @@ class ModelService:
         similar_songs = []
         for dist, rec_idx in zip(distances[0][1:], indices[0][1:]):  # Skip first (same song)
             rec_song_id = self.index_to_track_id[rec_idx]
-            similarity_score = 1.0 - dist
+            # Use actual distance instead of converting to similarity
+            distance_score = float(dist)
             
             similar_songs.append({
                 'song_id': rec_song_id,
-                'similarity_score': float(similarity_score),
+                'similarity_score': distance_score,  # This is now actually distance
                 'distance': float(dist),
                 'cluster_id': int(self.cluster_labels[rec_idx])
             })
