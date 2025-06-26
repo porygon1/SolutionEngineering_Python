@@ -335,16 +335,6 @@ DEBUG=true
 # Frontend Configuration
 REACT_APP_API_URL=http://localhost:8000
 ```
-
-## 🚀 Deployment
-
-### Production Deployment
-```bash
-# Use production configuration
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up --build
-
-# Or with environment override
-ENVIRONMENT=production docker-compose up --build
 ```
 
 ### Performance Tuning
