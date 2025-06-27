@@ -18,7 +18,6 @@
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "type-check": "tsc --noEmit",
     "start": "vite --host 0.0.0.0 --port 5173",
-    "serve": "vite preview --host 0.0.0.0 --port 4173",
     "docker:build": "docker build -t spotify-frontend .",
     "docker:run": "docker run -p 5173:5173 spotify-frontend",
     "clean": "rm -rf dist node_modules/.vite",
@@ -34,18 +33,11 @@
     "lucide-react": "^0.468.0",
     "clsx": "^2.1.1",
     "@heroicons/react": "^2.2.0",
-    "@headlessui/react": "^2.2.0",
-    "react-hot-toast": "^2.4.1",
-    "zustand": "^4.4.7",
-    "date-fns": "^2.30.0",
-    "react-intersection-observer": "^9.5.3",
-    "react-virtualized-auto-sizer": "^1.0.24",
-    "react-window": "^1.8.8"
+    "@headlessui/react": "^2.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
-    "@types/react-window": "^1.8.8",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
     "@vitejs/plugin-react": "^4.3.4",

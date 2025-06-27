@@ -21,6 +21,7 @@ from sqlalchemy import select
 
 from app.database.models import Track, Artist, Album
 from app.config import settings
+from app.services.similarity_utils import similarity_calculator
 
 
 class CompatibleLyricsSimilarityModel:
@@ -310,7 +311,7 @@ class LyricsSimilarityService:
             # Find similar songs based on model type
             similar_indices, distances = self.current_model.find_similar(lyrics_vector, k=k)
             
-            # Format results
+            # Format results with distance
             results = []
             for idx, distance in zip(similar_indices, distances):
                 if idx < len(self.current_model.metadata['training_songs']):
@@ -319,8 +320,13 @@ class LyricsSimilarityService:
                         'track_id': song_info['id'],
                         'name': song_info['name'],
                         'artist': song_info['artists_id'],
-                        'similarity_score': float(distance)  # Using distance as score (lower is better)
+                        'distance': float(distance)
                     })
+            
+            # Calculate similarity scores using the utility
+            model_info = self.current_model.get_model_info()
+            model_type = model_info.get('model_type', 'lyrics')
+            results = similarity_calculator.add_similarity_scores(results, model_type)
             
             # Enrich with database information if available
             if db:

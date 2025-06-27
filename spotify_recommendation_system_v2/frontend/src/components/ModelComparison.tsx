@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiService, ModelComparisonResponse, ModelComparisonResult, Song } from '../services/api';
 import SongCard from './SongCard';
 import ModelSelector from './ModelSelector';
+import { useLikedSongs } from '../App';
 
 interface ModelComparisonProps {
   initialSongs?: Song[];
@@ -12,12 +13,19 @@ const ModelComparison: React.FC<ModelComparisonProps> = ({
   initialSongs = [],
   onSongSelect
 }) => {
-  const [selectedModels, setSelectedModels] = useState<string[]>(['hdbscan_knn', 'lyrics']);
-  const [availableModels, setAvailableModels] = useState<string[]>(['cluster', 'hdbscan_knn', 'lyrics', 'artist_based', 'genre_based', 'global', 'hybrid']);
+  const [selectedModels, setSelectedModels] = useState<string[]>(['hdbscan_llav_pca', 'svd_knn']);
+  const [availableModels, setAvailableModels] = useState<string[]>([
+    'cluster', 'hdbscan_knn', 
+    'hdbscan_naive_features', 'hdbscan_pca_features', 'hdbscan_llav_features', 'hdbscan_llav_pca', 'hdbscan_combined_features',
+    'lyrics', 'knn_cosine', 'knn_cosine_k20', 'knn_euclidean', 'svd_knn',
+    'artist_based', 'genre_based', 'global', 'hybrid'
+  ]);
   const [comparisonResults, setComparisonResults] = useState<ModelComparisonResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [likedSongs, setLikedSongs] = useState<Song[]>(initialSongs);
+  
+  // Use shared liked songs context
+  const { likedSongs, addLikedSong, removeLikedSong } = useLikedSongs();
 
   // Fetch available models on component mount
   useEffect(() => {
@@ -27,7 +35,7 @@ const ModelComparison: React.FC<ModelComparisonProps> = ({
         if (modelsResponse.available_models && modelsResponse.available_models.length > 0) {
           setAvailableModels(modelsResponse.available_models);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch available models:', err);
         // Keep the default models if fetch fails
       }
@@ -52,7 +60,7 @@ const ModelComparison: React.FC<ModelComparisonProps> = ({
 
     try {
       const response = await apiService.recommendations.compare({
-        liked_song_ids: likedSongs.map(s => s.id),
+        liked_song_ids: likedSongs.map((s: Song) => s.id),
         models_to_compare: selectedModels,
         n_recommendations: 10
       });
@@ -66,21 +74,28 @@ const ModelComparison: React.FC<ModelComparisonProps> = ({
     }
   };
 
-  const addLikedSong = (song: Song) => {
-    if (!likedSongs.find(s => s.id === song.id)) {
-      setLikedSongs([...likedSongs, song]);
-    }
+  const handleAddLikedSong = (song: Song) => {
+    addLikedSong(song.id);
   };
 
-  const removeLikedSong = (songId: string) => {
-    setLikedSongs(likedSongs.filter(s => s.id !== songId));
+  const handleRemoveLikedSong = (songId: string) => {
+    removeLikedSong(songId);
   };
 
   const getModelColor = (modelType: string): string => {
     const colors = {
       cluster: '#1DB954',
       hdbscan_knn: '#8B5CF6',
+      hdbscan_naive_features: '#9333EA',
+      hdbscan_pca_features: '#7C3AED',
+      hdbscan_llav_features: '#6D28D9',
+      hdbscan_llav_pca: '#5B21B6',
+      hdbscan_combined_features: '#4C1D95',
       lyrics: '#FF6B6B',
+      knn_cosine: '#EC4899',
+      knn_cosine_k20: '#F97316',
+      knn_euclidean: '#EF4444',
+      svd_knn: '#A855F7',
       artist_based: '#F59E0B',
       genre_based: '#10B981',
       global: '#4ECDC4',
@@ -93,7 +108,16 @@ const ModelComparison: React.FC<ModelComparisonProps> = ({
     const icons = {
       cluster: '🎵',
       hdbscan_knn: '🔬',
+      hdbscan_naive_features: '🎯',
+      hdbscan_pca_features: '📊',
+      hdbscan_llav_features: '🔍',
+      hdbscan_llav_pca: '⭐',
+      hdbscan_combined_features: '🔀',
       lyrics: '📝',
+      knn_cosine: '📐',
+      knn_cosine_k20: '🔢',
+      knn_euclidean: '📏',
+      svd_knn: '🧮',
       artist_based: '🎤',
       genre_based: '🎵',
       global: '🌍',
@@ -123,12 +147,12 @@ const ModelComparison: React.FC<ModelComparisonProps> = ({
                 <div key={song.id} className="relative">
                   <SongCard 
                     song={song} 
-                    onPlay={onSongSelect}
+                    onCardClick={onSongSelect}
                     isPlaying={false}
-                    showSimilarityScore={false}
+                    showSimilarityScore={true}
                   />
                   <button
-                    onClick={() => removeLikedSong(song.id)}
+                    onClick={() => handleRemoveLikedSong(song.id)}
                     className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600"
                   >
                     ×
@@ -221,18 +245,28 @@ const ModelComparison: React.FC<ModelComparisonProps> = ({
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {result.recommendations.slice(0, 5).map((song) => (
+                      {result.recommendations
+                        .sort((a, b) => (b.similarity_score || 0) - (a.similarity_score || 0)) // Sort by highest similarity first
+                        .slice(0, 5)
+                        .map((song: Song, index: number) => (
                         <div 
                           key={`${result.model_type}-${song.id}`}
                           className="recommendation-item"
                         >
-                          <SongCard 
-                            song={song} 
-                            onPlay={onSongSelect}
-                            isPlaying={false}
-                            showSimilarityScore={true}
-                            compact={true}
-                          />
+                          <div className="flex items-center space-x-3 p-3 bg-gray-800/30 rounded-lg hover:bg-gray-800/50 transition-colors">
+                            <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                              {index + 1}
+                            </div>
+                            <div className="flex-1">
+                              <SongCard 
+                                song={song} 
+                                onCardClick={onSongSelect}
+                                isPlaying={false}
+                                showSimilarityScore={true}
+                                compact={true}
+                              />
+                            </div>
+                          </div>
                         </div>
                       ))}
                       {result.recommendations.length > 5 && (

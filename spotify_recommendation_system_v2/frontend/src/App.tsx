@@ -1,11 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { QueryClient, QueryClientProvider, useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Music, Home, Search, TrendingUp, Play, Pause, Clock, Heart, Grid, List, ArrowLeft, Volume2, SkipBack, SkipForward } from 'lucide-react';
 import { clsx } from 'clsx';
 import { apiService, Song, ClusterInfo } from './services/api';
 import { generateAlbumCover, getPreviewUrl, formatAudioFeatures, getMusicalKey, formatTempo, formatDuration } from './services/spotify';
+import ImportedSongCard from './components/SongCard';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -129,10 +130,108 @@ function useAudio() {
   return context;
 }
 
+// Liked Songs context
+interface LikedSongsContextType {
+  likedSongIds: string[];
+  likedSongs: Song[];
+  addLikedSong: (songId: string) => void;
+  removeLikedSong: (songId: string) => void;
+  clearLikedSongs: () => void;
+  isLikedSongsLoading: boolean;
+}
+
+const LikedSongsContext = React.createContext<LikedSongsContextType | null>(null);
+
+function LikedSongsProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient();
+  const [likedSongIds, setLikedSongIds] = React.useState<string[]>(() => {
+    const saved = localStorage.getItem('likedSongs');
+    const ids = saved ? JSON.parse(saved) : [];
+    console.log('LikedSongsProvider: Initial liked song IDs:', ids);
+    return ids;
+  });
+
+  // Fetch liked songs details for display
+  const { data: likedSongs = [], isLoading: isLikedSongsLoading, refetch: refetchLikedSongs } = useQuery({
+    queryKey: ['liked-songs-details', likedSongIds],
+    queryFn: async () => {
+      console.log('LikedSongsProvider: Fetching songs for IDs:', likedSongIds);
+      if (likedSongIds.length === 0) return [];
+      const promises = likedSongIds.map((id: string) => 
+        apiService.songs.getById(id).catch(() => null)
+      );
+      const results = await Promise.all(promises);
+      const filteredResults = results.filter(Boolean) as Song[];
+      console.log('LikedSongsProvider: Fetched songs:', filteredResults);
+      return filteredResults;
+    },
+    enabled: true, // Always enable the query, let the function handle empty arrays
+    staleTime: 0, // Always refetch when the query key changes
+    refetchOnMount: true
+  });
+
+  // Force refetch when liked song IDs change
+  React.useEffect(() => {
+    refetchLikedSongs();
+  }, [likedSongIds, refetchLikedSongs]);
+
+  const addLikedSong = (songId: string) => {
+    console.log('LikedSongsProvider: Adding song ID:', songId);
+    console.log('LikedSongsProvider: Current liked song IDs:', likedSongIds);
+    if (!likedSongIds.includes(songId)) {
+      const newLikedSongIds = [...likedSongIds, songId];
+      console.log('LikedSongsProvider: New liked song IDs:', newLikedSongIds);
+      setLikedSongIds(newLikedSongIds);
+      localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
+      // Invalidate the query to force a refetch
+      queryClient.invalidateQueries({ queryKey: ['liked-songs-details'] });
+    } else {
+      console.log('LikedSongsProvider: Song already liked');
+    }
+  };
+
+  const removeLikedSong = (songId: string) => {
+    const newLikedSongIds = likedSongIds.filter((id: string) => id !== songId);
+    setLikedSongIds(newLikedSongIds);
+    localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
+    // Invalidate the query to force a refetch
+    queryClient.invalidateQueries({ queryKey: ['liked-songs-details'] });
+  };
+
+  const clearLikedSongs = () => {
+    setLikedSongIds([]);
+    localStorage.setItem('likedSongs', JSON.stringify([]));
+    // Invalidate the query to force a refetch
+    queryClient.invalidateQueries({ queryKey: ['liked-songs-details'] });
+  };
+
+  return (
+    <LikedSongsContext.Provider value={{
+      likedSongIds,
+      likedSongs,
+      addLikedSong,
+      removeLikedSong,
+      clearLikedSongs,
+      isLikedSongsLoading
+    }}>
+      {children}
+    </LikedSongsContext.Provider>
+  );
+}
+
+function useLikedSongs() {
+  const context = React.useContext(LikedSongsContext);
+  if (!context) {
+    throw new Error('useLikedSongs must be used within LikedSongsProvider');
+  }
+  return context;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AudioProvider>
+        <LikedSongsProvider>
       <Router>
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
           {/* Background gradient */}
@@ -185,6 +284,7 @@ function App() {
           </div>
         </div>
       </Router>
+        </LikedSongsProvider>
       </AudioProvider>
     </QueryClientProvider>
   );
@@ -555,15 +655,21 @@ function BaseSongsSidebar({
 }
 
 function RecommendationsPage() {
-  const [likedSongIds, setLikedSongIds] = React.useState<string[]>(() => {
-    const saved = localStorage.getItem('likedSongs');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { likedSongIds, likedSongs, addLikedSong, removeLikedSong, clearLikedSongs } = useLikedSongs();
+  const { playTrack, pauseTrack, currentTrack, isPlaying } = useAudio();
   const [selectedApproach, setSelectedApproach] = React.useState<string>('audio_similarity');
   const [selectedLyricsModel, setSelectedLyricsModel] = React.useState<string>('svd_knn');
+  const [selectedHdbscanModel, setSelectedHdbscanModel] = React.useState<string>('hdbscan_llav_pca');
   const [recommendationCount, setRecommendationCount] = React.useState<number>(20);
   const [isModelSwitching, setIsModelSwitching] = React.useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState<boolean>(false);
+  const [selectedSong, setSelectedSong] = React.useState<Song | null>(null);
+  const [showSongInfo, setShowSongInfo] = React.useState(false);
+
+  const handleSongSelect = (song: Song) => {
+    setSelectedSong(song);
+    setShowSongInfo(true);
+  };
   
   // Fetch available models (only needed for lyrics approach)
   const { data: availableModels, isLoading: modelsLoading, error: modelsError } = useQuery({
@@ -574,19 +680,25 @@ function RecommendationsPage() {
     enabled: selectedApproach === 'lyrics_similarity'
   });
 
-  // Fetch liked songs details for display
-  const { data: likedSongs } = useQuery({
-    queryKey: ['liked-songs-details', likedSongIds],
+  // Fetch available HDBSCAN models (only needed for audio similarity approach)
+  const { data: availableHdbscanModels, isLoading: hdbscanModelsLoading, error: hdbscanModelsError } = useQuery({
+    queryKey: ['available-hdbscan-models'],
     queryFn: async () => {
-      if (likedSongIds.length === 0) return [];
-      const promises = likedSongIds.map(id => 
-        apiService.songs.getById(id).catch(() => null)
-      );
-      const results = await Promise.all(promises);
-      return results.filter(Boolean) as Song[];
+      try {
+        const response = await apiService.recommendations.getAvailableModels();
+        // Filter for HDBSCAN models
+        return response.available_models?.filter((model: string) => model.startsWith('hdbscan_')) || [];
+      } catch (error) {
+        console.error('Failed to fetch HDBSCAN models:', error);
+        return ['hdbscan_llav_pca', 'hdbscan_pca_features', 'hdbscan_combined_features', 'hdbscan_naive_features', 'hdbscan_llav_features'];
+      }
     },
-    enabled: likedSongIds.length > 0
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
+    enabled: selectedApproach === 'audio_similarity'
   });
+
+
 
   // Switch to selected lyrics model when needed
   React.useEffect(() => {
@@ -605,6 +717,22 @@ function RecommendationsPage() {
       setIsModelSwitching(false);
     }
   }, [selectedApproach, selectedLyricsModel]);
+
+  // Switch to selected HDBSCAN model when needed
+  React.useEffect(() => {
+    if (selectedApproach === 'audio_similarity') {
+      setIsModelSwitching(true);
+      apiService.recommendations.switchModel(selectedHdbscanModel)
+        .then(() => {
+          // Small delay to ensure model is fully loaded
+          setTimeout(() => setIsModelSwitching(false), 500);
+        })
+        .catch((error) => {
+          console.error('Failed to switch HDBSCAN model:', error);
+          setIsModelSwitching(false);
+        });
+    }
+  }, [selectedApproach, selectedHdbscanModel]);
 
   // Map approaches to actual recommendation types and API calls
   const getRecommendationConfig = () => {
@@ -669,7 +797,7 @@ function RecommendationsPage() {
   const config = getRecommendationConfig();
   
   const { data: recommendations, isLoading, error, refetch } = useQuery({
-    queryKey: ['recommendations', likedSongIds, selectedApproach, selectedLyricsModel],
+    queryKey: ['recommendations', likedSongIds, selectedApproach, selectedLyricsModel, selectedHdbscanModel],
     queryFn: config.queryFn,
     enabled: likedSongIds.length > 0 && !isModelSwitching,
     staleTime: 0, // Always refetch when enabled
@@ -915,6 +1043,156 @@ function RecommendationsPage() {
                 </div>
               )}
 
+              {/* HDBSCAN Model Selection (only shown for audio similarity approach) */}
+              {selectedApproach === 'audio_similarity' && (
+                <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-purple-300 mb-3">Choose Audio Analysis Method</h4>
+                  <p className="text-xs text-gray-400 mb-4">
+                    Each method processes audio features differently. Compare them to find the best approach for your music preferences.
+                  </p>
+                  <div className="space-y-3">
+                    {hdbscanModelsLoading ? (
+                      <div className="text-gray-400 text-sm">Loading audio analysis models...</div>
+                    ) : hdbscanModelsError ? (
+                      <div className="text-red-400 text-sm">Error loading HDBSCAN models</div>
+                    ) : availableHdbscanModels && availableHdbscanModels.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div
+                          onClick={() => setSelectedHdbscanModel('hdbscan_llav_pca')}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedHdbscanModel === 'hdbscan_llav_pca'
+                              ? 'border-purple-500 bg-purple-500/10'
+                              : 'border-gray-600 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-lg">⭐</span>
+                            <div>
+                              <h5 className="font-medium text-purple-300">Low-Level + PCA</h5>
+                              <span className="text-xs text-green-400 bg-green-400/20 px-2 py-0.5 rounded-full">Best</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Advanced low-level audio features with PCA dimensionality reduction. Best overall performance for audio similarity.
+                          </p>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedHdbscanModel('hdbscan_pca_features')}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedHdbscanModel === 'hdbscan_pca_features'
+                              ? 'border-purple-500 bg-purple-500/10'
+                              : 'border-gray-600 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-lg">📊</span>
+                            <div>
+                              <h5 className="font-medium text-purple-300">PCA Features</h5>
+                              <span className="text-xs text-blue-400 bg-blue-400/20 px-2 py-0.5 rounded-full">Efficient</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Basic audio features with PCA reduction. Good balance of performance and speed.
+                          </p>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedHdbscanModel('hdbscan_combined_features')}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedHdbscanModel === 'hdbscan_combined_features'
+                              ? 'border-purple-500 bg-purple-500/10'
+                              : 'border-gray-600 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-lg">🔀</span>
+                            <div>
+                              <h5 className="font-medium text-purple-300">Combined Features</h5>
+                              <span className="text-xs text-orange-400 bg-orange-400/20 px-2 py-0.5 rounded-full">Comprehensive</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Combination of basic and low-level features. Most comprehensive analysis for complex patterns.
+                          </p>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedHdbscanModel('hdbscan_naive_features')}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedHdbscanModel === 'hdbscan_naive_features'
+                              ? 'border-purple-500 bg-purple-500/10'
+                              : 'border-gray-600 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-lg">🎯</span>
+                            <div>
+                              <h5 className="font-medium text-purple-300">Basic Features</h5>
+                              <span className="text-xs text-gray-400 bg-gray-400/20 px-2 py-0.5 rounded-full">Simple</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Basic audio features only. Simple and fast, good for general similarity matching.
+                          </p>
+                        </div>
+
+                        <div
+                          onClick={() => setSelectedHdbscanModel('hdbscan_llav_features')}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedHdbscanModel === 'hdbscan_llav_features'
+                              ? 'border-purple-500 bg-purple-500/10'
+                              : 'border-gray-600 hover:border-gray-500'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="text-lg">🔍</span>
+                            <div>
+                              <h5 className="font-medium text-purple-300">Low-Level Audio</h5>
+                              <span className="text-xs text-purple-400 bg-purple-400/20 px-2 py-0.5 rounded-full">Detailed</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Raw low-level audio features. Most detailed analysis for nuanced audio characteristics.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-gray-400 text-sm">No HDBSCAN models available</div>
+                    )}
+                    
+                    {/* Current HDBSCAN Model Status */}
+                    <div className="bg-gray-800/50 rounded-lg p-3 mt-4">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-2 h-2 rounded-full ${isModelSwitching ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`}></div>
+                        <span className="text-sm text-gray-300">
+                          {isModelSwitching ? (
+                            <span className="text-yellow-300">Switching model...</span>
+                          ) : (
+                            <>
+                              Current: <span className="text-purple-300 font-medium">
+                                {selectedHdbscanModel === 'hdbscan_llav_pca' ? 'Low-Level + PCA (Best)' :
+                                 selectedHdbscanModel === 'hdbscan_pca_features' ? 'PCA Features (Efficient)' :
+                                 selectedHdbscanModel === 'hdbscan_combined_features' ? 'Combined Features (Comprehensive)' :
+                                 selectedHdbscanModel === 'hdbscan_naive_features' ? 'Basic Features (Simple)' :
+                                 selectedHdbscanModel === 'hdbscan_llav_features' ? 'Low-Level Audio (Detailed)' :
+                                 selectedHdbscanModel}
+                              </span>
+                            </>
+                          )}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {isModelSwitching ? 
+                          'Please wait while the model is being loaded...' :
+                          'Try different methods to see how they affect your audio-based recommendations!'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Current Selection Summary */}
               <div className="bg-gray-800/50 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
@@ -930,15 +1208,10 @@ function RecommendationsPage() {
         )}
         
         <LikedSongsBar
-          likedSongs={likedSongs || []}
-          onRemoveSong={(songId) => {
-            const newLikedSongIds = likedSongIds.filter(id => id !== songId);
-            setLikedSongIds(newLikedSongIds);
-            localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
-          }}
+          likedSongs={likedSongs}
+          onRemoveSong={removeLikedSong}
           onClearAll={() => {
-            setLikedSongIds([]);
-            localStorage.setItem('likedSongs', JSON.stringify([]));
+            clearLikedSongs();
             setIsSidebarOpen(false);
           }}
         />
@@ -957,15 +1230,16 @@ function RecommendationsPage() {
               {popularSongs && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {popularSongs.map((song) => (
-                    <SongCard
+                    <ImportedSongCard
                       key={song.id}
                       song={song}
-                      onLike={(songId) => {
-                        const newLikedSongIds = [...likedSongIds, songId];
-                        setLikedSongIds(newLikedSongIds);
-                        localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
-                      }}
+                      onPlay={(song) => playTrack(song)}
+                      onPause={pauseTrack}
+                      isPlaying={currentTrack?.id === song.id && isPlaying}
+                      onLike={(song) => addLikedSong(song.id)}
+                      onCardClick={handleSongSelect}
                       isLiked={likedSongIds.includes(song.id)}
+                      layout="card"
                     />
                   ))}
                 </div>
@@ -1003,15 +1277,17 @@ function RecommendationsPage() {
               {!isLoading && !isModelSwitching && recommendations?.recommendations && recommendations.recommendations.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {recommendations.recommendations.map((song) => (
-                    <SongCard
+                    <ImportedSongCard
                       key={song.id}
                       song={song}
-                      onLike={(songId) => {
-                          const newLikedSongIds = [...likedSongIds, songId];
-                          setLikedSongIds(newLikedSongIds);
-                          localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
-                        }}
+                      onPlay={(song) => playTrack(song)}
+                      onPause={pauseTrack}
+                      isPlaying={currentTrack?.id === song.id && isPlaying}
+                      onLike={(song) => addLikedSong(song.id)}
+                      onCardClick={handleSongSelect}
                       isLiked={likedSongIds.includes(song.id)}
+                      showSimilarityScore={true}
+                      layout="card"
                     />
                   ))}
                 </div>
@@ -1023,35 +1299,36 @@ function RecommendationsPage() {
 
       {/* Base Songs Sidebar */}
       <BaseSongsSidebar
-        baseSongs={likedSongs || []}
+        baseSongs={likedSongs}
         isOpen={isSidebarOpen}
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        onRemoveSong={(songId) => {
-          const newLikedSongIds = likedSongIds.filter(id => id !== songId);
-          setLikedSongIds(newLikedSongIds);
-          localStorage.setItem('likedSongs', JSON.stringify(newLikedSongIds));
-        }}
+        onRemoveSong={removeLikedSong}
         onClearAll={() => {
-          setLikedSongIds([]);
-          localStorage.setItem('likedSongs', JSON.stringify([]));
+          clearLikedSongs();
           setIsSidebarOpen(false);
         }}
       />
+
+      {/* Song Information Panel */}
+      {showSongInfo && selectedSong && (
+        <SongInfoPanel
+          song={selectedSong}
+          onClose={() => setShowSongInfo(false)}
+        />
+      )}
     </>
   );
 }
 
 function ExplorePage() {
+  const { likedSongIds, likedSongs, addLikedSong, removeLikedSong, clearLikedSongs } = useLikedSongs();
+  const { playTrack, pauseTrack, currentTrack, isPlaying } = useAudio();
   const [selectedCluster, setSelectedCluster] = React.useState<number | null>(null);
   const [viewMode, setViewMode] = React.useState<'clusters' | 'songs'>('clusters');
   const [layoutMode, setLayoutMode] = React.useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedSong, setSelectedSong] = React.useState<Song | null>(null);
   const [showSongInfo, setShowSongInfo] = React.useState(false);
-  const [likedSongs, setLikedSongs] = React.useState<Set<string>>(() => {
-    const saved = localStorage.getItem('likedSongs');
-    return new Set(saved ? JSON.parse(saved) : []);
-  });
 
   // Fetch clusters
   const { data: clusters, isLoading: clustersLoading } = useQuery({
@@ -1079,19 +1356,7 @@ function ExplorePage() {
     queryFn: () => apiService.songs.getRandom({ limit: 50 })
   });
 
-  // Fetch liked songs details for display
-  const { data: likedSongsDetails } = useQuery({
-    queryKey: ['liked-songs-details', Array.from(likedSongs)],
-    queryFn: async () => {
-      if (likedSongs.size === 0) return [];
-      const promises = Array.from(likedSongs).map(id => 
-        apiService.songs.getById(id).catch(() => null)
-      );
-      const results = await Promise.all(promises);
-      return results.filter(Boolean) as Song[];
-    },
-    enabled: likedSongs.size > 0
-  });
+
 
   const handleClusterSelect = (cluster: ClusterInfo) => {
     setSelectedCluster(cluster.id);
@@ -1099,15 +1364,11 @@ function ExplorePage() {
   };
 
   const handleSongLike = (songId: string) => {
-    const newLikedSongs = new Set(likedSongs);
-    if (likedSongs.has(songId)) {
-      newLikedSongs.delete(songId);
+    if (likedSongIds.includes(songId)) {
+      removeLikedSong(songId);
     } else {
-      newLikedSongs.add(songId);
+      addLikedSong(songId);
     }
-    setLikedSongs(newLikedSongs);
-    // Persist to localStorage
-    localStorage.setItem('likedSongs', JSON.stringify(Array.from(newLikedSongs)));
   };
 
   const handleSongSelect = (song: Song) => {
@@ -1206,17 +1467,9 @@ function ExplorePage() {
         </div>
 
               <LikedSongsBar
-        likedSongs={likedSongsDetails || []}
-        onRemoveSong={(songId) => {
-          const newLikedSongs = new Set(likedSongs);
-          newLikedSongs.delete(songId);
-          setLikedSongs(newLikedSongs);
-          localStorage.setItem('likedSongs', JSON.stringify(Array.from(newLikedSongs)));
-        }}
-        onClearAll={() => {
-          setLikedSongs(new Set());
-          localStorage.setItem('likedSongs', JSON.stringify([]));
-        }}
+        likedSongs={likedSongs}
+        onRemoveSong={removeLikedSong}
+        onClearAll={clearLikedSongs}
       />
 
         {/* Clusters View */}
@@ -1272,12 +1525,17 @@ function ExplorePage() {
               layoutMode === 'grid' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {currentSongs.map((song) => (
-                    <SongCard
+                    <ImportedSongCard
                       key={song.id}
                       song={song}
-                      onLike={handleSongLike}
-                      onSelect={handleSongSelect}
-                      isLiked={likedSongs.has(song.id)}
+                      onPlay={(song) => playTrack(song)}
+                      onPause={pauseTrack}
+                      isPlaying={currentTrack?.id === song.id && isPlaying}
+                      onLike={(song) => handleSongLike(song.id)}
+                      onCardClick={handleSongSelect}
+                      isLiked={likedSongIds.includes(song.id)}
+                      layout="card"
+                      showSimilarityScore={song.similarity_score !== undefined && song.similarity_score > 0}
                     />
                   ))}
                 </div>
@@ -1290,7 +1548,7 @@ function ExplorePage() {
                       index={index}
                       onLike={handleSongLike}
                       onSelect={handleSongSelect}
-                      isLiked={likedSongs.has(song.id)}
+                      isLiked={likedSongIds.includes(song.id)}
                     />
                   ))}
                 </div>
@@ -1315,90 +1573,7 @@ function ExplorePage() {
   );
 }
 
-// Song Card Component
-function SongCard({ song, onLike, onSelect, isLiked }: {
-  song: Song;
-  onLike: (songId: string) => void;
-  onSelect?: (song: Song) => void;
-  isLiked: boolean;
-}) {
-  const { playTrack, currentTrack, isPlaying } = useAudio();
-  const isCurrentTrack = currentTrack?.id === song.id;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
-      onClick={() => onSelect?.(song)}
-      className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-gray-800 hover:border-green-500/50 transition-all duration-200 group cursor-pointer"
-    >
-      <div className="relative mb-4">
-        <div className="aspect-square rounded-lg overflow-hidden bg-gray-800">
-          <img
-            src={generateAlbumCover(song)}
-            alt={`${song.name} by ${song.artist}`}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-            }}
-          />
-          <div className="w-full h-full flex items-center justify-center hidden">
-            <Music className="w-16 h-16 text-gray-600" />
-          </div>
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          onClick={() => playTrack(song)}
-          className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 hover:bg-green-400 rounded-full flex items-center justify-center shadow-lg transition-colors"
-        >
-          {isCurrentTrack && isPlaying ? (
-            <Pause className="w-6 h-6 text-black" />
-          ) : (
-            <Play className="w-6 h-6 text-black ml-0.5" />
-          )}
-        </motion.button>
-      </div>
-      <div className="space-y-2">
-        <h3 className="text-white font-semibold text-lg truncate">{song.name}</h3>
-        <p className="text-gray-400 text-sm truncate">{song.artist}</p>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="flex-1 bg-gray-700 rounded-full h-1 w-16">
-                <div
-                  className="bg-green-500 h-full rounded-full"
-                  style={{ width: `${song.popularity}%` }}
-                />
-              </div>
-              <span className="text-xs text-gray-500">{song.popularity}%</span>
-            </div>
-            <button
-              onClick={() => onLike(song.id)}
-              className={clsx(
-                'p-1 rounded-full transition-colors',
-                isLiked ? 'text-green-500' : 'text-gray-400 hover:text-white'
-              )}
-            >
-              <Heart className="w-4 h-4" />
-            </button>
-          </div>
-          {song.similarity_score && (
-            <div className="flex items-center justify-center">
-              <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                {song.similarity_score > 10 ? 
-                  `${Math.round(song.similarity_score)}% match` : 
-                  `${song.similarity_score.toFixed(3)} distance`
-                }
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
+// Use the imported SongCard component instead of defining a duplicate here
 
 // Song List Item Component
 function SongListItem({ song, index, onLike, onSelect, isLiked }: {
@@ -1597,9 +1772,10 @@ function FeatureCard({ icon, title, description }: {
 
 // Model Comparison Page Component
 function ModelComparisonPage() {
-  const [likedSongs, setLikedSongs] = React.useState<Song[]>([]);
+  const { likedSongIds, likedSongs, addLikedSong, removeLikedSong, clearLikedSongs } = useLikedSongs();
   const [selectedApproaches, setSelectedApproaches] = React.useState<string[]>(['audio_similarity', 'lyrics_similarity']);
-  const [selectedLyricsModel, setSelectedLyricsModel] = React.useState<string>('svd_knn');
+  const [selectedLyricsModels, setSelectedLyricsModels] = React.useState<string[]>(['svd_knn']);
+  const [selectedHDBSCANModels, setSelectedHDBSCANModels] = React.useState<string[]>(['hdbscan_llav_pca']);
   const [comparisonResults, setComparisonResults] = React.useState<any>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isModelSwitching, setIsModelSwitching] = React.useState(false);
@@ -1650,7 +1826,7 @@ function ModelComparisonPage() {
   };
 
   const handleCompareModels = async () => {
-    if (selectedApproaches.length === 0 || likedSongs.length === 0) {
+    if (selectedApproaches.length === 0 || likedSongIds.length === 0) {
       setError('Please select at least one approach and one song');
       return;
     }
@@ -1659,22 +1835,51 @@ function ModelComparisonPage() {
     setError(null);
 
     try {
-      // Switch to selected lyrics model if lyrics approach is selected
-      if (selectedApproaches.includes('lyrics_similarity')) {
-        setIsModelSwitching(true);
-        await apiService.recommendations.switchModel(selectedLyricsModel);
-        // Small delay to ensure model is fully loaded
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setIsModelSwitching(false);
+      setIsModelSwitching(true);
+      
+      // Create models to compare based on selected approaches and specific models
+      const modelsToCompare: string[] = [];
+
+      // Add selected approaches (non-model specific)
+      selectedApproaches.forEach(approach => {
+        if (approach === 'similar_artists') {
+          modelsToCompare.push('artist_based');
+        } else if (approach === 'similar_genres') {
+          modelsToCompare.push('genre_based');
+        } else if (approach === 'cluster_based') {
+          modelsToCompare.push('cluster');
+        }
+      });
+
+      // Add selected HDBSCAN models if audio similarity is selected
+      if (selectedApproaches.includes('audio_similarity')) {
+        selectedHDBSCANModels.forEach(model => {
+          modelsToCompare.push(model);
+        });
       }
 
-      // Map approaches to their backend model types
-      const modelsToCompare = selectedApproaches.map(approach => 
-        approaches[approach as keyof typeof approaches]?.modelType || approach
-      );
+      // Add selected lyrics models if lyrics similarity is selected
+      if (selectedApproaches.includes('lyrics_similarity')) {
+        selectedLyricsModels.forEach(model => {
+          modelsToCompare.push(model);
+        });
+      }
+
+      // Switch to the first model of each type for API compatibility
+      if (selectedApproaches.includes('lyrics_similarity') && selectedLyricsModels.length > 0) {
+        await apiService.recommendations.switchModel(selectedLyricsModels[0]);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      if (selectedApproaches.includes('audio_similarity') && selectedHDBSCANModels.length > 0) {
+        await apiService.recommendations.switchModel(selectedHDBSCANModels[0]);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      setIsModelSwitching(false);
 
       const response = await apiService.recommendations.compare({
-        liked_song_ids: likedSongs.map(s => s.id),
+        liked_song_ids: likedSongIds,
         models_to_compare: modelsToCompare,
         n_recommendations: 10
       });
@@ -1687,14 +1892,12 @@ function ModelComparisonPage() {
     }
   };
 
-  const addLikedSong = (song: Song) => {
-    if (!likedSongs.find(s => s.id === song.id)) {
-      setLikedSongs([...likedSongs, song]);
-    }
+  const addLikedSongFromSearch = (song: Song) => {
+    addLikedSong(song.id);
   };
 
-  const removeLikedSong = (songId: string) => {
-    setLikedSongs(likedSongs.filter(s => s.id !== songId));
+  const removeLikedSongFromList = (songId: string) => {
+    removeLikedSong(songId);
   };
 
   const getApproachColor = (approachKey: string): string => {
@@ -1756,11 +1959,11 @@ function ModelComparisonPage() {
                     <p className="text-sm text-gray-400">{song.artist}</p>
                   </div>
                   <button
-                    onClick={() => addLikedSong(song)}
-                    disabled={likedSongs.find(s => s.id === song.id) !== undefined}
+                    onClick={() => addLikedSongFromSearch(song)}
+                    disabled={likedSongIds.includes(song.id)}
                     className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg text-sm"
                   >
-                    {likedSongs.find(s => s.id === song.id) ? 'Added' : 'Add'}
+                    {likedSongIds.includes(song.id) ? 'Added' : 'Add'}
                   </button>
                 </div>
               ))}
@@ -1779,7 +1982,7 @@ function ModelComparisonPage() {
                       <p className="text-sm text-gray-400 truncate">{song.artist}</p>
                     </div>
                     <button
-                      onClick={() => removeLikedSong(song.id)}
+                      onClick={() => removeLikedSongFromList(song.id)}
                       className="ml-2 text-red-400 hover:text-red-300"
                     >
                       ×
@@ -1911,11 +2114,8 @@ function ModelComparisonPage() {
                                   <p className="text-sm text-gray-400 truncate">{song.artist}</p>
                                 </div>
                                 {song.similarity_score && (
-                                  <span className="text-xs bg-gray-700 px-2 py-1 rounded">
-                                    {song.similarity_score > 10 ? 
-                                      `${Math.round(song.similarity_score)}% match` : 
-                                      `${song.similarity_score.toFixed(3)} distance`
-                                    }
+                                  <span className="text-xs bg-green-500/20 border border-green-500/30 text-green-400 px-2 py-1 rounded-full font-medium">
+                                    {(song.similarity_score * 100).toFixed(1)}% match
                                   </span>
                                 )}
                                 <button
@@ -1937,19 +2137,169 @@ function ModelComparisonPage() {
           )}
         </motion.div>
 
-        {/* Lyrics Model Selection (shown when lyrics approach is selected) */}
-        {selectedApproaches.includes('lyrics_similarity') && (
-          <div className="mt-6 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-300 mb-3">Lyrics Analysis Method</h4>
+        {/* HDBSCAN Model Selection (shown when audio similarity approach is selected) */}
+        {selectedApproaches.includes('audio_similarity') && (
+          <div className="mt-6 bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-purple-300 mb-3">Audio Analysis Methods</h4>
             <p className="text-xs text-gray-400 mb-4">
-              Choose which lyrics analysis method to use in the comparison. Each method has different strengths.
+              Choose multiple HDBSCAN audio analysis methods to compare. Each method uses different feature extraction approaches.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div
-                onClick={() => setSelectedLyricsModel('svd_knn')}
+                onClick={() => {
+                  const modelName = 'hdbscan_llav_pca';
+                  if (selectedHDBSCANModels.includes(modelName)) {
+                    setSelectedHDBSCANModels(selectedHDBSCANModels.filter(m => m !== modelName));
+                  } else {
+                    setSelectedHDBSCANModels([...selectedHDBSCANModels, modelName]);
+                  }
+                }}
                 className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                  selectedLyricsModel === 'svd_knn'
+                  selectedHDBSCANModels.includes('hdbscan_llav_pca')
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-sm">⭐</span>
+                  <h5 className="text-sm font-medium text-purple-300">Low-Level + PCA</h5>
+                  <span className="text-xs text-green-400 bg-green-400/20 px-1.5 py-0.5 rounded-full">Best</span>
+                </div>
+                <p className="text-xs text-gray-400">Low-level audio features with PCA reduction</p>
+              </div>
+
+              <div
+                onClick={() => {
+                  const modelName = 'hdbscan_pca_features';
+                  if (selectedHDBSCANModels.includes(modelName)) {
+                    setSelectedHDBSCANModels(selectedHDBSCANModels.filter(m => m !== modelName));
+                  } else {
+                    setSelectedHDBSCANModels([...selectedHDBSCANModels, modelName]);
+                  }
+                }}
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  selectedHDBSCANModels.includes('hdbscan_pca_features')
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-sm">📊</span>
+                  <h5 className="text-sm font-medium text-purple-300">PCA Features</h5>
+                  <span className="text-xs text-blue-400 bg-blue-400/20 px-1.5 py-0.5 rounded-full">Efficient</span>
+                </div>
+                <p className="text-xs text-gray-400">PCA-reduced basic audio features</p>
+              </div>
+
+              <div
+                onClick={() => {
+                  const modelName = 'hdbscan_combined_features';
+                  if (selectedHDBSCANModels.includes(modelName)) {
+                    setSelectedHDBSCANModels(selectedHDBSCANModels.filter(m => m !== modelName));
+                  } else {
+                    setSelectedHDBSCANModels([...selectedHDBSCANModels, modelName]);
+                  }
+                }}
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  selectedHDBSCANModels.includes('hdbscan_combined_features')
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-sm">🔀</span>
+                  <h5 className="text-sm font-medium text-purple-300">Combined Features</h5>
+                  <span className="text-xs text-orange-400 bg-orange-400/20 px-1.5 py-0.5 rounded-full">Comprehensive</span>
+                </div>
+                <p className="text-xs text-gray-400">Combined basic and low-level features</p>
+              </div>
+
+              <div
+                onClick={() => {
+                  const modelName = 'hdbscan_naive_features';
+                  if (selectedHDBSCANModels.includes(modelName)) {
+                    setSelectedHDBSCANModels(selectedHDBSCANModels.filter(m => m !== modelName));
+                  } else {
+                    setSelectedHDBSCANModels([...selectedHDBSCANModels, modelName]);
+                  }
+                }}
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  selectedHDBSCANModels.includes('hdbscan_naive_features')
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-sm">🎯</span>
+                  <h5 className="text-sm font-medium text-purple-300">Basic Features</h5>
+                  <span className="text-xs text-gray-400 bg-gray-400/20 px-1.5 py-0.5 rounded-full">Simple</span>
+                </div>
+                <p className="text-xs text-gray-400">Basic audio features (tempo, key, etc.)</p>
+              </div>
+
+              <div
+                onClick={() => {
+                  const modelName = 'hdbscan_llav_features';
+                  if (selectedHDBSCANModels.includes(modelName)) {
+                    setSelectedHDBSCANModels(selectedHDBSCANModels.filter(m => m !== modelName));
+                  } else {
+                    setSelectedHDBSCANModels([...selectedHDBSCANModels, modelName]);
+                  }
+                }}
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  selectedHDBSCANModels.includes('hdbscan_llav_features')
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+              >
+                <div className="flex items-center space-x-2 mb-1">
+                  <span className="text-sm">🔍</span>
+                  <h5 className="text-sm font-medium text-purple-300">Low-Level Audio</h5>
+                  <span className="text-xs text-purple-400 bg-purple-400/20 px-1.5 py-0.5 rounded-full">Detailed</span>
+                </div>
+                <p className="text-xs text-gray-400">Detailed low-level audio analysis</p>
+              </div>
+            </div>
+            
+            <div className="mt-3 text-center">
+              <span className="text-xs text-gray-400">
+                Selected ({selectedHDBSCANModels.length}): <span className="text-purple-300 font-medium">
+                  {selectedHDBSCANModels.length === 0 ? 'None' : 
+                   selectedHDBSCANModels.map(model => {
+                     if (model === 'hdbscan_llav_pca') return 'Low-Level + PCA';
+                     if (model === 'hdbscan_pca_features') return 'PCA Features';
+                     if (model === 'hdbscan_combined_features') return 'Combined Features';
+                     if (model === 'hdbscan_naive_features') return 'Basic Features';
+                     if (model === 'hdbscan_llav_features') return 'Low-Level Audio';
+                     return model;
+                   }).join(', ')}
+                </span>
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Lyrics Model Selection (shown when lyrics approach is selected) */}
+        {selectedApproaches.includes('lyrics_similarity') && (
+          <div className="mt-6 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-blue-300 mb-3">Lyrics Analysis Methods</h4>
+            <p className="text-xs text-gray-400 mb-4">
+              Choose multiple lyrics analysis methods to compare. Each method has different strengths.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div
+                onClick={() => {
+                  const modelName = 'svd_knn';
+                  if (selectedLyricsModels.includes(modelName)) {
+                    setSelectedLyricsModels(selectedLyricsModels.filter(m => m !== modelName));
+                  } else {
+                    setSelectedLyricsModels([...selectedLyricsModels, modelName]);
+                  }
+                }}
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  selectedLyricsModels.includes('svd_knn')
                     ? 'border-blue-500 bg-blue-500/10'
                     : 'border-gray-600 hover:border-gray-500'
                 }`}
@@ -1963,9 +2313,16 @@ function ModelComparisonPage() {
               </div>
 
               <div
-                onClick={() => setSelectedLyricsModel('knn_cosine')}
+                onClick={() => {
+                  const modelName = 'knn_cosine';
+                  if (selectedLyricsModels.includes(modelName)) {
+                    setSelectedLyricsModels(selectedLyricsModels.filter(m => m !== modelName));
+                  } else {
+                    setSelectedLyricsModels([...selectedLyricsModels, modelName]);
+                  }
+                }}
                 className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                  selectedLyricsModel === 'knn_cosine'
+                  selectedLyricsModels.includes('knn_cosine')
                     ? 'border-blue-500 bg-blue-500/10'
                     : 'border-gray-600 hover:border-gray-500'
                 }`}
@@ -1979,9 +2336,16 @@ function ModelComparisonPage() {
               </div>
 
               <div
-                onClick={() => setSelectedLyricsModel('knn_euclidean')}
+                onClick={() => {
+                  const modelName = 'knn_euclidean';
+                  if (selectedLyricsModels.includes(modelName)) {
+                    setSelectedLyricsModels(selectedLyricsModels.filter(m => m !== modelName));
+                  } else {
+                    setSelectedLyricsModels([...selectedLyricsModels, modelName]);
+                  }
+                }}
                 className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                  selectedLyricsModel === 'knn_euclidean'
+                  selectedLyricsModels.includes('knn_euclidean')
                     ? 'border-blue-500 bg-blue-500/10'
                     : 'border-gray-600 hover:border-gray-500'
                 }`}
@@ -1995,9 +2359,16 @@ function ModelComparisonPage() {
               </div>
 
               <div
-                onClick={() => setSelectedLyricsModel('knn_cosine_k20')}
+                onClick={() => {
+                  const modelName = 'knn_cosine_k20';
+                  if (selectedLyricsModels.includes(modelName)) {
+                    setSelectedLyricsModels(selectedLyricsModels.filter(m => m !== modelName));
+                  } else {
+                    setSelectedLyricsModels([...selectedLyricsModels, modelName]);
+                  }
+                }}
                 className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                  selectedLyricsModel === 'knn_cosine_k20'
+                  selectedLyricsModels.includes('knn_cosine_k20')
                     ? 'border-blue-500 bg-blue-500/10'
                     : 'border-gray-600 hover:border-gray-500'
                 }`}
@@ -2013,12 +2384,15 @@ function ModelComparisonPage() {
             
             <div className="mt-3 text-center">
               <span className="text-xs text-gray-400">
-                Current: <span className="text-blue-300 font-medium">
-                  {selectedLyricsModel === 'svd_knn' ? 'SVD + KNN' :
-                   selectedLyricsModel === 'knn_cosine' ? 'KNN Cosine' :
-                   selectedLyricsModel === 'knn_euclidean' ? 'KNN Euclidean' :
-                   selectedLyricsModel === 'knn_cosine_k20' ? 'KNN Cosine (K=20)' :
-                   selectedLyricsModel}
+                Selected ({selectedLyricsModels.length}): <span className="text-blue-300 font-medium">
+                  {selectedLyricsModels.length === 0 ? 'None' :
+                   selectedLyricsModels.map(model => {
+                     if (model === 'svd_knn') return 'SVD + KNN';
+                     if (model === 'knn_cosine') return 'KNN Cosine';
+                     if (model === 'knn_euclidean') return 'KNN Euclidean';
+                     if (model === 'knn_cosine_k20') return 'KNN Cosine (K=20)';
+                     return model;
+                   }).join(', ')}
                 </span>
               </span>
             </div>
@@ -2033,7 +2407,7 @@ function ModelComparisonPage() {
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         onRemoveSong={removeLikedSong}
         onClearAll={() => {
-          setLikedSongs([]);
+          clearLikedSongs();
           setIsSidebarOpen(false);
         }}
       />
@@ -2167,10 +2541,7 @@ function SongInfoPanel({ song, onClose }: {
               <div className="flex items-center justify-between">
                 <span className="text-gray-300">Match Score</span>
                 <div className="bg-gradient-to-r from-green-500 to-teal-500 text-white text-sm px-3 py-1 rounded-full font-medium">
-                  {song.similarity_score > 10 ? 
-                    `${Math.round(song.similarity_score)}% match` : 
-                    `${song.similarity_score.toFixed(3)} distance`
-                  }
+                  {(song.similarity_score * 100).toFixed(1)}% match
                 </div>
               </div>
             )}
@@ -2256,4 +2627,5 @@ function SongInfoPanel({ song, onClose }: {
   );
 }
 
-export default App; 
+export default App;
+export { useLikedSongs }; 

@@ -101,7 +101,14 @@ class RecommendationRequest(BaseModel):
     
     @validator('recommendation_type')
     def validate_recommendation_type(cls, v):
-        allowed_types = ["cluster", "global", "hybrid", "lyrics", "hdbscan_knn", "artist_based", "genre_based"]
+        allowed_types = [
+            "cluster", "global", "hybrid", "lyrics", "hdbscan_knn", "artist_based", "genre_based",
+            # HDBSCAN model variants
+            "hdbscan_naive_features", "hdbscan_pca_features", "hdbscan_llav_features", 
+            "hdbscan_llav_pca", "hdbscan_combined_features",
+            # Lyrics model variants
+            "svd_knn", "knn_cosine", "knn_cosine_k20", "knn_euclidean"
+        ]
         if v not in allowed_types:
             raise ValueError(f"recommendation_type must be one of {allowed_types}")
         return v
@@ -300,7 +307,14 @@ class ModelComparisonRequest(BaseModel):
     
     @validator('models_to_compare')
     def validate_models(cls, v):
-        allowed_models = ["cluster", "global", "hybrid", "lyrics", "hdbscan_knn", "artist_based", "genre_based"]
+        allowed_models = [
+            "cluster", "global", "hybrid", "lyrics", "hdbscan_knn", "artist_based", "genre_based",
+            # HDBSCAN model variants
+            "hdbscan_naive_features", "hdbscan_pca_features", "hdbscan_llav_features", 
+            "hdbscan_llav_pca", "hdbscan_combined_features",
+            # Lyrics model variants
+            "svd_knn", "knn_cosine", "knn_cosine_k20", "knn_euclidean"
+        ]
         for model in v:
             if model not in allowed_models:
                 raise ValueError(f"Model {model} not supported. Must be one of {allowed_models}")

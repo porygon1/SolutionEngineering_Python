@@ -20,6 +20,38 @@ const MODEL_INFO = {
     icon: '🔬',
     color: '#8B5CF6'
   },
+  // HDBSCAN Advanced Models
+  hdbscan_naive_features: {
+    name: 'HDBSCAN Naive',
+    description: 'Basic audio features with HDBSCAN clustering',
+    icon: '🎯',
+    color: '#9333EA'
+  },
+  hdbscan_pca_features: {
+    name: 'HDBSCAN PCA',
+    description: 'PCA-reduced audio features with HDBSCAN',
+    icon: '📊',
+    color: '#7C3AED'
+  },
+  hdbscan_llav_features: {
+    name: 'HDBSCAN Low-Level',
+    description: 'Detailed low-level audio features with HDBSCAN',
+    icon: '🔍',
+    color: '#6D28D9'
+  },
+  hdbscan_llav_pca: {
+    name: 'HDBSCAN Low-Level PCA',
+    description: 'Low-level audio features + PCA (best performance)',
+    icon: '⭐',
+    color: '#5B21B6'
+  },
+  hdbscan_combined_features: {
+    name: 'HDBSCAN Combined',
+    description: 'Combined basic and low-level features with HDBSCAN',
+    icon: '🔀',
+    color: '#4C1D95'
+  },
+  // Lyrics Models
   lyrics: {
     name: 'Lyrics Similarity',
     description: 'Recommendations based on lyrical content and themes',
@@ -79,7 +111,12 @@ const MODEL_INFO = {
 const ModelSelector: React.FC<ModelSelectorProps> = ({
   selectedModels,
   onModelChange,
-  availableModels = ['cluster', 'hdbscan_knn', 'lyrics', 'artist_based', 'genre_based', 'global', 'hybrid'],
+  availableModels = [
+    'cluster', 'hdbscan_knn', 
+    'hdbscan_naive_features', 'hdbscan_pca_features', 'hdbscan_llav_features', 'hdbscan_llav_pca', 'hdbscan_combined_features',
+    'lyrics', 'knn_cosine', 'knn_cosine_k20', 'knn_euclidean', 'svd_knn',
+    'artist_based', 'genre_based', 'global', 'hybrid'
+  ],
   disabled = false
 }) => {
   const handleModelToggle = (modelType: string) => {
@@ -138,13 +175,28 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
                   <p className="text-sm text-gray-600 mt-1">
                     {modelInfo?.description}
                   </p>
-                  {(modelType === 'hdbscan_knn' || modelType === 'artist_based' || modelType === 'genre_based') && (
-                    <div className="mt-2">
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {(modelType === 'hdbscan_knn' || modelType === 'artist_based' || modelType === 'genre_based') && (
                       <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-full">
                         {modelType === 'hdbscan_knn' ? 'Advanced' : 'New!'}
                       </span>
-                    </div>
-                  )}
+                    )}
+                    {modelType.startsWith('hdbscan_') && modelType !== 'hdbscan_knn' && (
+                      <span className="inline-block px-2 py-1 text-xs bg-violet-100 text-violet-700 rounded-full">
+                        HDBSCAN
+                      </span>
+                    )}
+                    {modelType === 'hdbscan_llav_pca' && (
+                      <span className="inline-block px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full">
+                        Best Performance
+                      </span>
+                    )}
+                    {(modelType.startsWith('knn_') || modelType.startsWith('svd_') || modelType === 'lyrics') && (
+                      <span className="inline-block px-2 py-1 text-xs bg-pink-100 text-pink-700 rounded-full">
+                        Lyrics
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

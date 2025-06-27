@@ -1,0 +1,14 @@
+{
+  "model_name": "pca_features",
+  "approach": "PCA-Reduced Audio Features",
+  "feature_type": "pca_audio_features",
+  "has_pca": true,
+  "pca_components": 6,
+  "has_scaler": true,
+  "cluster_based": true,
+  "min_cluster_size": 30,
+  "min_samples": 5,
+  "metric": "euclidean",
+  "cluster_selection_method": "eom",
+  "description": "Basic audio features reduced to 6 components using PCA for dimensionality reduction"
+} 

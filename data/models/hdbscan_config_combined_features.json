@@ -1,0 +1,17 @@
+{
+  "model_name": "combined_features",
+  "approach": "Combined Audio Features",
+  "feature_type": "combined_features",
+  "has_pca": false,
+  "has_scaler": true,
+  "cluster_based": true,
+  "min_cluster_size": 30,
+  "min_samples": 5,
+  "metric": "euclidean",
+  "cluster_selection_method": "eom",
+  "description": "Combination of basic track features and low-level audio features",
+  "feature_sources": [
+    "basic_audio_features",
+    "low_level_audio_features"
+  ]
+} 

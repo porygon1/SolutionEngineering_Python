@@ -1,0 +1,19 @@
+{
+  "model_name": "llav_pca",
+  "approach": "Low Level Audio Features + PCA",
+  "feature_type": "low_level_audio_features_pca",
+  "has_pca": true,
+  "pca_components": 60,
+  "has_scaler": true,
+  "cluster_based": true,
+  "min_cluster_size": 30,
+  "min_samples": 5,
+  "metric": "euclidean",
+  "cluster_selection_method": "eom",
+  "description": "Low-level audio features reduced to 60 components using PCA (best performing approach)",
+  "preprocessing": {
+    "imputation": "KNN",
+    "scaler": "MinMaxScaler",
+    "pca_variance_explained": "95%"
+  }
+} 

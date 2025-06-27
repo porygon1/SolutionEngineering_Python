@@ -490,9 +490,20 @@ async def compare_recommendation_models(
                 # Get recommendations from the specific model
                 if model_type == "lyrics" and model_service.lyrics_service.is_ready():
                     response = await model_service.get_lyrics_recommendations(rec_request, db)
+                elif model_type in ["svd_knn", "knn_cosine", "knn_cosine_k20", "knn_euclidean"] and model_service.lyrics_service.is_ready():
+                    # Handle specific lyrics model variants by switching model first
+                    if model_type != model_service.lyrics_service.get_current_model_info().get('model_name'):
+                        switch_result = model_service.lyrics_service.switch_model(model_type)
+                        if not switch_result.get('success'):
+                            logger.warning(f"Failed to switch to lyrics model {model_type}, using current model")
+                    response = await model_service.get_lyrics_recommendations(rec_request, db)
                 elif model_type == "hdbscan_knn" and model_service.is_ready():
                     response = await model_service.get_recommendations_with_similarity(rec_request, db)
                     response.recommendation_type = "hdbscan_knn"
+                elif model_type.startswith("hdbscan_") and model_service.hdbscan_service.is_ready():
+                    # Extract the actual model name from the type (e.g., "hdbscan_naive_features" -> "naive_features")
+                    hdbscan_model_name = model_type.replace("hdbscan_", "")
+                    response = await model_service.get_hdbscan_recommendations(rec_request, db, hdbscan_model_name)
                 elif model_type == "artist_based":
                     response = await get_artist_based_recommendations(rec_request, db)
                 elif model_type == "genre_based":
@@ -659,6 +670,19 @@ async def get_available_models(
             if current_lyrics_model and "model_name" in current_lyrics_model:
                 current_models["lyrics_current"] = current_lyrics_model
         
+        # Add HDBSCAN similarity models
+        if hasattr(model_service, 'hdbscan_service') and model_service.hdbscan_service:
+            hdbscan_models = model_service.hdbscan_service.get_available_models()
+            current_hdbscan_model = model_service.hdbscan_service.get_current_model_info()
+            
+            # Prefix HDBSCAN models to distinguish them
+            prefixed_hdbscan_models = [f"hdbscan_{model}" for model in hdbscan_models]
+            all_models.extend(prefixed_hdbscan_models)
+            
+            # Add current HDBSCAN model info
+            if current_hdbscan_model and "model_name" in current_hdbscan_model:
+                current_models["hdbscan_current"] = current_hdbscan_model
+            
         # Add additional strategy models
         all_models.extend(["global", "hybrid"])
         current_models["global"] = {
@@ -691,7 +715,8 @@ async def get_available_models(
             "all_models": current_models,
             "total_available": len(all_models),
             "hdbscan_ready": model_service.is_ready(),
-            "lyrics_ready": hasattr(model_service, 'lyrics_service') and model_service.lyrics_service.is_ready()
+            "lyrics_ready": hasattr(model_service, 'lyrics_service') and model_service.lyrics_service.is_ready(),
+            "hdbscan_advanced_ready": hasattr(model_service, 'hdbscan_service') and model_service.hdbscan_service.is_ready()
         }
         
     except Exception as e:
@@ -704,29 +729,66 @@ async def switch_model(
     model_name: str,
     model_service: ModelService = Depends(get_model_service)
 ) -> dict:
-    """Switch to a different lyrics similarity model"""
+    """Switch to a different similarity model (lyrics or HDBSCAN)"""
     try:
-        if not hasattr(model_service, 'lyrics_service') or not model_service.lyrics_service:
-            raise HTTPException(status_code=503, detail="Lyrics service not initialized")
-            
-        result = model_service.lyrics_service.switch_model(model_name)
+        logger.info(f"🔄 Attempting to switch to model: {model_name}")
         
-        if result.get("success"):
-            return {
-                "message": f"Successfully switched to model: {model_name}",
-                "model_info": result.get("info", {}),
-                "switch_time": time.time()
-            }
+        # Determine model type based on model name prefix
+        if model_name.startswith('hdbscan_'):
+            logger.info(f"🔬 Detected HDBSCAN model request: {model_name}")
+            
+            # HDBSCAN model switching
+            if not hasattr(model_service, 'hdbscan_service') or not model_service.hdbscan_service:
+                logger.error("❌ HDBSCAN service not initialized")
+                raise HTTPException(status_code=503, detail="HDBSCAN service not initialized")
+            
+            logger.info("✅ HDBSCAN service found, calling switch_model")
+            result = model_service.hdbscan_service.switch_model(model_name)
+            
+            if result.get("success"):
+                logger.success(f"✅ Successfully switched to HDBSCAN model: {model_name}")
+                return {
+                    "message": f"Successfully switched to HDBSCAN model: {model_name}",
+                    "model_info": result.get("info", {}),
+                    "model_type": "hdbscan",
+                    "switch_time": time.time()
+                }
+            else:
+                logger.error(f"❌ HDBSCAN model switch failed: {result.get('error')}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Failed to switch model: {result.get('error', 'Unknown error')}"
+                )
         else:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Failed to switch model: {result.get('error', 'Unknown error')}"
-            )
+            logger.info(f"📝 Detected lyrics model request: {model_name}")
+            
+            # Lyrics model switching
+            if not hasattr(model_service, 'lyrics_service') or not model_service.lyrics_service:
+                logger.error("❌ Lyrics service not initialized")
+                raise HTTPException(status_code=503, detail="Lyrics service not initialized")
+                
+            logger.info("✅ Lyrics service found, calling switch_model")
+            result = model_service.lyrics_service.switch_model(model_name)
+            
+            if result.get("success"):
+                logger.success(f"✅ Successfully switched to lyrics model: {model_name}")
+                return {
+                    "message": f"Successfully switched to lyrics model: {model_name}",
+                    "model_info": result.get("info", {}),
+                    "model_type": "lyrics",
+                    "switch_time": time.time()
+                }
+            else:
+                logger.error(f"❌ Lyrics model switch failed: {result.get('error')}")
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Failed to switch model: {result.get('error', 'Unknown error')}"
+                )
             
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error switching to model {model_name}: {e}")
+        logger.error(f"❌ Error switching to model {model_name}: {e}")
         raise HTTPException(status_code=500, detail=f"Error switching model: {e}")
 
 

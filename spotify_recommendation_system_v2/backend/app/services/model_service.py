@@ -26,6 +26,8 @@ from app.database.database import get_database
 from app.database.models import Track, Artist, Album
 from app.config import settings
 from app.services.lyrics_similarity_service import LyricsSimilarityService
+from app.services.hdbscan_similarity_service import HDBSCANSimilarityService
+from app.services.similarity_utils import similarity_calculator
 
 
 class ModelService:
@@ -47,6 +49,9 @@ class ModelService:
         
         # Initialize lyrics similarity service
         self.lyrics_service = LyricsSimilarityService()
+        
+        # Initialize HDBSCAN similarity service
+        self.hdbscan_service = HDBSCANSimilarityService()
         
         # Model file paths - use environment variable or default path
         self.models_dir = os.environ.get('MODELS_PATH', '/app/models')
@@ -129,6 +134,14 @@ class ModelService:
                 logger.warning(f"⚠️ Lyrics similarity service failed to initialize: {e}")
                 logger.info("📖 Lyrics-based recommendations will not be available, but other features will work")
             
+            # Initialize HDBSCAN similarity service (non-blocking)
+            try:
+                await self.hdbscan_service.initialize()
+                logger.info("✅ HDBSCAN similarity service initialized")
+            except Exception as e:
+                logger.warning(f"⚠️ HDBSCAN similarity service failed to initialize: {e}")
+                logger.info("🔬 Advanced HDBSCAN-based recommendations will not be available, but other features will work")
+            
         except Exception as e:
             logger.error(f"❌ Failed to load ML models: {e}")
             self._is_ready = False
@@ -192,11 +205,11 @@ class ModelService:
                             'source_song': song_id
                         })
             
-            # Remove duplicates and sort by distance (lower is better)
+            # Remove duplicates and sort by similarity score (higher is better)
             seen_tracks = set()
             unique_recommendations = []
             
-            for rec in sorted(all_recommendations, key=lambda x: x['similarity_score']):  # Sort by distance ascending (lower is better)
+            for rec in sorted(all_recommendations, key=lambda x: x['similarity_score'], reverse=True):  # Sort by similarity descending (higher is better)
                 if rec['track_id'] not in seen_tracks:
                     unique_recommendations.append(rec)
                     seen_tracks.add(rec['track_id'])
@@ -240,6 +253,103 @@ class ModelService:
             processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000 
             logger.error(f"❌ Error generating lyrics recommendations: {e} (took {processing_time:.1f}ms)")
             logger.warning("📖 Falling back to cluster-based recommendations")
+            # Fall back to cluster-based recommendations
+            return await self.get_recommendations_with_similarity(request, db)
+    
+    async def get_hdbscan_recommendations(
+        self,
+        request: RecommendationRequest,
+        db: AsyncSession,
+        model_type: str = None
+    ) -> RecommendationResponse:
+        """
+        Get song recommendations using HDBSCAN similarity with different approaches
+        """
+        if not self.hdbscan_service.is_ready():
+            logger.warning("🔬 HDBSCAN similarity service not available, falling back to cluster-based recommendations")
+            # Fall back to cluster-based recommendations
+            return await self.get_recommendations_with_similarity(request, db)
+        
+        start_time = datetime.utcnow()
+        
+        try:
+            logger.info(f"🔬 Getting HDBSCAN-based recommendations for {len(request.liked_song_ids)} songs")
+            
+            # If a specific model type is requested, switch to it
+            if model_type and model_type != self.hdbscan_service.get_current_model_info().get('model_name'):
+                switch_result = self.hdbscan_service.switch_model(model_type)
+                if not switch_result.get('success'):
+                    logger.warning(f"Failed to switch to model {model_type}, using current model")
+            
+            all_recommendations = []
+            
+            # Get HDBSCAN recommendations for each liked song
+            for song_id in request.liked_song_ids:
+                similar_songs = await self.hdbscan_service.find_similar_by_track_id(
+                    song_id, 
+                    k=request.n_recommendations * 2,  # Get more to allow for filtering
+                    db=db
+                )
+                
+                for song_data in similar_songs:
+                    if song_data['track_id'] not in request.liked_song_ids:
+                        all_recommendations.append({
+                            'track_id': song_data['track_id'],
+                            'similarity_score': song_data['similarity_score'],
+                            'source_song': song_id
+                        })
+            
+            # Remove duplicates and sort by similarity score (higher is better)
+            seen_tracks = set()
+            unique_recommendations = []
+            
+            for rec in sorted(all_recommendations, key=lambda x: x['similarity_score'], reverse=True):  # Sort by similarity descending (higher is better)
+                if rec['track_id'] not in seen_tracks:
+                    unique_recommendations.append(rec)
+                    seen_tracks.add(rec['track_id'])
+                    
+                    if len(unique_recommendations) >= request.n_recommendations:
+                        break
+            
+            # Get full track information from database
+            track_ids = [rec['track_id'] for rec in unique_recommendations]
+            tracks_query = select(Track).options(
+                joinedload(Track.artist),
+                joinedload(Track.album)
+            ).filter(Track.id.in_(track_ids))
+            
+            result = await db.execute(tracks_query)
+            tracks = {track.id: track for track in result.scalars().all()}
+            
+            # Convert to Song objects with similarity scores
+            recommendations = []
+            for rec in unique_recommendations:
+                track_id = rec['track_id']
+                if track_id in tracks:
+                    track = tracks[track_id]
+                    song = self._track_to_song_with_similarity(track, rec['similarity_score'])
+                    recommendations.append(song)
+            
+            processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            
+            current_model_info = self.hdbscan_service.get_current_model_info()
+            recommendation_type = f"hdbscan_{current_model_info.get('model_name', 'unknown')}"
+            
+            response = RecommendationResponse(
+                recommendations=recommendations,
+                recommendation_type=recommendation_type,
+                clusters_used=[],  # HDBSCAN service handles its own clustering
+                total_found=len(recommendations),
+                processing_time_ms=processing_time
+            )
+            
+            logger.success(f"✅ Generated {len(recommendations)} HDBSCAN-based recommendations in {processing_time:.1f}ms")
+            return response
+            
+        except Exception as e:
+            processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000 
+            logger.error(f"❌ Error generating HDBSCAN recommendations: {e} (took {processing_time:.1f}ms)")
+            logger.warning("🔬 Falling back to cluster-based recommendations")
             # Fall back to cluster-based recommendations
             return await self.get_recommendations_with_similarity(request, db)
     
@@ -296,11 +406,9 @@ class ModelService:
                     rec_song_id = self.index_to_track_id[rec_idx]
                     
                     if rec_song_id not in request.liked_song_ids:
-                        # Use actual distance as the score instead of converting to similarity
-                        distance_score = float(dist)
+                        # Store distance for similarity calculation
                         all_recommendations.append({
                             'song_id': rec_song_id,
-                            'similarity_score': distance_score,  # This is now actually distance
                             'distance': float(dist),
                             'source_song': song_id,
                             'cluster_id': int(self.cluster_labels[rec_idx])
@@ -315,11 +423,14 @@ class ModelService:
                         source_song=song_id
                     ))
             
-            # Remove duplicates and sort by distance (lower is better)
+            # Calculate similarity scores for all recommendations
+            all_recommendations = similarity_calculator.add_similarity_scores(all_recommendations, "hdbscan")
+            
+            # Remove duplicates and sort by similarity score (higher is better)
             seen_songs = set()
             unique_recommendations = []
             
-            for rec in sorted(all_recommendations, key=lambda x: x['similarity_score']):  # Sort by distance ascending (lower is better)
+            for rec in sorted(all_recommendations, key=lambda x: x['similarity_score'], reverse=True):  # Sort by similarity descending (higher is better)
                 if rec['song_id'] not in seen_songs:
                     seen_songs.add(rec['song_id'])
                     unique_recommendations.append(rec)
@@ -429,15 +540,15 @@ class ModelService:
         similar_songs = []
         for dist, rec_idx in zip(distances[0][1:], indices[0][1:]):  # Skip first (same song)
             rec_song_id = self.index_to_track_id[rec_idx]
-            # Use actual distance instead of converting to similarity
-            distance_score = float(dist)
             
             similar_songs.append({
                 'song_id': rec_song_id,
-                'similarity_score': distance_score,  # This is now actually distance
                 'distance': float(dist),
                 'cluster_id': int(self.cluster_labels[rec_idx])
             })
+        
+        # Calculate similarity scores using the utility
+        similar_songs = similarity_calculator.add_similarity_scores(similar_songs, "hdbscan")
         
         return similar_songs
     

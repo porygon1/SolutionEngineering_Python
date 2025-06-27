@@ -1,0 +1,17 @@
+{
+  "model_name": "naive_features",
+  "approach": "Naive Audio Features",
+  "feature_type": "basic_audio_features",
+  "has_pca": false,
+  "has_scaler": true,
+  "cluster_based": true,
+  "min_cluster_size": 30,
+  "min_samples": 5,
+  "metric": "euclidean",
+  "cluster_selection_method": "eom",
+  "description": "Basic audio features (tempo, key, mode, valence, energy, etc.) with MinMaxScaler",
+  "features": [
+    "key", "time_signature", "tempo", "mode", "valence", "energy",
+    "acousticness", "danceability", "instrumentalness", "liveness", "loudness", "speechiness"
+  ]
+} 

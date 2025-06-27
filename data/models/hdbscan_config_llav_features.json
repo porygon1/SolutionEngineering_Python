@@ -1,0 +1,17 @@
+{
+  "model_name": "llav_features",
+  "approach": "Low Level Audio Features",
+  "feature_type": "low_level_audio_features",
+  "has_pca": false,
+  "has_scaler": true,
+  "cluster_based": true,
+  "min_cluster_size": 30,
+  "min_samples": 5,
+  "metric": "euclidean",
+  "cluster_selection_method": "eom",
+  "description": "Detailed low-level audio analysis features with imputation and scaling",
+  "preprocessing": {
+    "imputation": "KNN",
+    "scaler": "MinMaxScaler"
+  }
+} 

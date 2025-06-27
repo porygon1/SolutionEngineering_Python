@@ -11,7 +11,7 @@ import {
 import { HeartIcon as HeartOutlineIcon } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 import { Song } from '../services/api';
-import { spotifyService } from '../services/spotify';
+import { spotifyService, generateAlbumCover } from '../services/spotify';
 
 interface SongCardProps {
   song: Song;
@@ -19,6 +19,7 @@ interface SongCardProps {
   onPlay?: (song: Song) => void;
   onPause?: () => void;
   onLike?: (song: Song) => void;
+  onCardClick?: (song: Song) => void;
   isLiked?: boolean;
   showFeatures?: boolean;
   layout?: 'card' | 'list';
@@ -32,6 +33,7 @@ const SongCard: React.FC<SongCardProps> = ({
   onPlay,
   onPause,
   onLike,
+  onCardClick,
   isLiked = false,
   showFeatures = true,
   layout = 'card',
@@ -42,7 +44,8 @@ const SongCard: React.FC<SongCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when clicking play button
     if (isPlaying) {
       onPause?.();
     } else {
@@ -50,14 +53,23 @@ const SongCard: React.FC<SongCardProps> = ({
     }
   };
 
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when clicking like button
+    onLike?.(song);
+  };
+
+  const handleCardClick = () => {
+    onCardClick?.(song);
+  };
+
   const handleImageError = () => {
     setImageError(true);
   };
 
-  // Get album art URL - this would come from your dataset
+  // Get album art URL using the generateAlbumCover function
   const albumArtUrl = imageError 
-    ? '/api/placeholder/300/300' 
-    : `https://i.scdn.co/image/${song.id}` || '/api/placeholder/300/300';
+    ? generateAlbumCover(song) 
+    : generateAlbumCover(song);
 
   if (layout === 'list') {
     return (
@@ -65,9 +77,10 @@ const SongCard: React.FC<SongCardProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
-        className="flex items-center space-x-4 p-3 rounded-lg hover:bg-white/5 transition-all duration-200 group"
+        className="flex items-center space-x-4 p-3 rounded-lg hover:bg-white/5 transition-all duration-200 group cursor-pointer"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={handleCardClick}
       >
         {/* Album Art */}
         <div className="relative flex-shrink-0">
@@ -99,6 +112,15 @@ const SongCard: React.FC<SongCardProps> = ({
         <div className="flex-1 min-w-0">
           <h3 className="text-white font-medium truncate">{song.name}</h3>
           <p className="text-gray-400 text-sm truncate">{song.artist}</p>
+          {showSimilarityScore && song.similarity_score !== undefined && (
+            <div className="flex items-center space-x-1 mt-1">
+              <div className="px-2 py-1 bg-green-500/20 rounded-full border border-green-500/30">
+                <span className="text-xs text-green-400 font-medium">
+                  {(song.similarity_score * 100).toFixed(1)}% match
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Duration */}
@@ -112,7 +134,7 @@ const SongCard: React.FC<SongCardProps> = ({
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => onLike?.(song)}
+            onClick={handleLike}
             className={clsx(
               'p-2 rounded-full transition-colors',
               isLiked ? 'text-green-500' : 'text-gray-400 hover:text-white'
@@ -140,6 +162,7 @@ const SongCard: React.FC<SongCardProps> = ({
       className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-4 border border-gray-800 hover:border-green-500/50 transition-all duration-200 group cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleCardClick}
     >
       {/* Album Art Container */}
       <div className="relative mb-4">
@@ -181,7 +204,7 @@ const SongCard: React.FC<SongCardProps> = ({
           animate={{ opacity: isHovered ? 1 : 0 }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => onLike?.(song)}
+          onClick={handleLike}
           className={clsx(
             'absolute top-2 right-2 p-2 rounded-full backdrop-blur-sm transition-colors',
             isLiked 
@@ -244,6 +267,18 @@ const SongCard: React.FC<SongCardProps> = ({
               <div className="text-xs text-gray-400">
                 {spotifyService.featureToPercentage(song.danceability)}%
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Similarity Score */}
+        {showSimilarityScore && song.similarity_score !== undefined && (
+          <div className="flex items-center justify-center bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg p-2 border border-green-500/30">
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-400">
+                {(song.similarity_score * 100).toFixed(1)}%
+              </div>
+              <div className="text-xs text-gray-400">Similarity</div>
             </div>
           </div>
         )}

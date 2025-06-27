@@ -371,58 +371,7 @@ class DataImporter:
     
     async def _bulk_insert_artists(self, session, artists_data: List[Dict]) -> None:
         """Bulk insert artists with proper conflict handling"""
-        try:
-            if self.skip_duplicates:
-                # Use ON CONFLICT DO NOTHING for bulk insert
-                stmt = insert(Artist).values(artists_data)
-                stmt = stmt.on_conflict_do_nothing(index_elements=['id'])
-                await session.execute(stmt)
-                await session.commit()
-                self.stats['artists']['imported'] += len(artists_data)
-            else:
-                # Regular bulk insert without conflict handling
-                for artist_data in artists_data:
-                    artist = Artist(**artist_data)
-                    session.add(artist)
-                await session.commit()
-                self.stats['artists']['imported'] += len(artists_data)
-            
-        except Exception as e:
-            await session.rollback()
-            logger.error(f"❌ Failed to insert artists batch: {e}")
-            
-            # Individual insert fallback with proper conflict handling
-            successful = 0
-            for artist_data in artists_data:
-                try:
-                    if self.skip_duplicates:
-                        # Check if artist already exists before inserting
-                        existing = await session.get(Artist, artist_data['id'])
-                        if existing:
-                            logger.debug(f"Artist {artist_data['id']} already exists, skipping")
-                            self.stats['artists']['skipped'] += 1
-                            continue
-                    
-                    artist = Artist(**artist_data)
-                    session.add(artist)
-                    await session.commit()
-                    successful += 1
-                    
-                except IntegrityError as ie:
-                    await session.rollback()
-                    if self.skip_duplicates and "duplicate key" in str(ie).lower():
-                        logger.debug(f"Skipping duplicate artist {artist_data.get('id', 'unknown')}")
-                        self.stats['artists']['skipped'] += 1
-                    else:
-                        logger.debug(f"Failed to insert artist {artist_data.get('id', 'unknown')}: {ie}")
-                        self.stats['artists']['errors'] += 1
-                except Exception as individual_error:
-                    await session.rollback()
-                    logger.debug(f"Failed to insert artist {artist_data.get('id', 'unknown')}: {individual_error}")
-                    self.stats['artists']['errors'] += 1
-            
-            logger.info(f"Salvaged {successful}/{len(artists_data)} artists from failed batch")
-            self.stats['artists']['imported'] += successful
+        await self._generic_bulk_insert(session, artists_data, Artist, 'artists', 'id')
     
     async def import_albums(self, df: pd.DataFrame, session) -> None:
         """Import albums - import all data since it should be complete"""
@@ -492,58 +441,7 @@ class DataImporter:
     
     async def _bulk_insert_albums(self, session, albums_data: List[Dict]) -> None:
         """Bulk insert albums with proper conflict handling"""
-        try:
-            if self.skip_duplicates:
-                # Use ON CONFLICT DO NOTHING for bulk insert
-                stmt = insert(Album).values(albums_data)
-                stmt = stmt.on_conflict_do_nothing(index_elements=['id'])
-                await session.execute(stmt)
-                await session.commit()
-                self.stats['albums']['imported'] += len(albums_data)
-            else:
-                # Regular bulk insert without conflict handling
-                for album_data in albums_data:
-                    album = Album(**album_data)
-                    session.add(album)
-                await session.commit()
-                self.stats['albums']['imported'] += len(albums_data)
-            
-        except Exception as e:
-            await session.rollback()
-            logger.error(f"❌ Failed to insert albums batch: {e}")
-            
-            # Individual insert fallback with proper conflict handling
-            successful = 0
-            for album_data in albums_data:
-                try:
-                    if self.skip_duplicates:
-                        # Check if album already exists before inserting
-                        existing = await session.get(Album, album_data['id'])
-                        if existing:
-                            logger.debug(f"Album {album_data['id']} already exists, skipping")
-                            self.stats['albums']['skipped'] += 1
-                            continue
-                    
-                    album = Album(**album_data)
-                    session.add(album)
-                    await session.commit()
-                    successful += 1
-                    
-                except IntegrityError as ie:
-                    await session.rollback()
-                    if self.skip_duplicates and "duplicate key" in str(ie).lower():
-                        logger.debug(f"Skipping duplicate album {album_data.get('id', 'unknown')}")
-                        self.stats['albums']['skipped'] += 1
-                    else:
-                        logger.debug(f"Failed to insert album {album_data.get('id', 'unknown')}: {ie}")
-                        self.stats['albums']['errors'] += 1
-                except Exception as individual_error:
-                    await session.rollback()
-                    logger.debug(f"Failed to insert album {album_data.get('id', 'unknown')}: {individual_error}")
-                    self.stats['albums']['errors'] += 1
-            
-            logger.info(f"Salvaged {successful}/{len(albums_data)} albums from failed batch")
-            self.stats['albums']['imported'] += successful
+        await self._generic_bulk_insert(session, albums_data, Album, 'albums', 'id')
     
     async def import_tracks(self, df: pd.DataFrame, session) -> None:
         """Import tracks - import all data since it should be complete"""
@@ -642,58 +540,7 @@ class DataImporter:
     
     async def _bulk_insert_tracks(self, session, tracks_data: List[Dict]) -> None:
         """Bulk insert tracks with proper conflict handling"""
-        try:
-            if self.skip_duplicates:
-                # Use ON CONFLICT DO NOTHING for bulk insert
-                stmt = insert(Track).values(tracks_data)
-                stmt = stmt.on_conflict_do_nothing(index_elements=['id'])
-                await session.execute(stmt)
-                await session.commit()
-                self.stats['tracks']['imported'] += len(tracks_data)
-            else:
-                # Regular bulk insert without conflict handling
-                for track_data in tracks_data:
-                    track = Track(**track_data)
-                    session.add(track)
-                await session.commit()
-                self.stats['tracks']['imported'] += len(tracks_data)
-            
-        except Exception as e:
-            await session.rollback()
-            logger.error(f"❌ Failed to insert tracks batch: {e}")
-            
-            # Individual insert fallback with proper conflict handling
-            successful = 0
-            for track_data in tracks_data:
-                try:
-                    if self.skip_duplicates:
-                        # Check if track already exists before inserting
-                        existing = await session.get(Track, track_data['id'])
-                        if existing:
-                            logger.debug(f"Track {track_data['id']} already exists, skipping")
-                            self.stats['tracks']['skipped'] += 1
-                            continue
-                    
-                    track = Track(**track_data)
-                    session.add(track)
-                    await session.commit()
-                    successful += 1
-                    
-                except IntegrityError as ie:
-                    await session.rollback()
-                    if self.skip_duplicates and "duplicate key" in str(ie).lower():
-                        logger.debug(f"Skipping duplicate track {track_data.get('id', 'unknown')}")
-                        self.stats['tracks']['skipped'] += 1
-                    else:
-                        logger.debug(f"Failed to insert track {track_data.get('id', 'unknown')}: {ie}")
-                        self.stats['tracks']['errors'] += 1
-                except Exception as individual_error:
-                    await session.rollback()
-                    logger.debug(f"Failed to insert track {track_data.get('id', 'unknown')}: {individual_error}")
-                    self.stats['tracks']['errors'] += 1
-            
-            logger.info(f"Salvaged {successful}/{len(tracks_data)} tracks from failed batch")
-            self.stats['tracks']['imported'] += successful
+        await self._generic_bulk_insert(session, tracks_data, Track, 'tracks', 'id')
     
     async def import_audio_features(self, df: pd.DataFrame, session) -> None:
         """Import low-level audio features"""
@@ -786,58 +633,7 @@ class DataImporter:
     
     async def _bulk_insert_audio_features(self, session, audio_features_data: List[Dict]) -> None:
         """Bulk insert audio features with proper conflict handling"""
-        try:
-            if self.skip_duplicates:
-                # Use ON CONFLICT DO NOTHING for bulk insert
-                stmt = insert(AudioFeatures).values(audio_features_data)
-                stmt = stmt.on_conflict_do_nothing(index_elements=['track_id'])
-                await session.execute(stmt)
-                await session.commit()
-                self.stats['audio_features']['imported'] += len(audio_features_data)
-            else:
-                # Regular bulk insert without conflict handling
-                for audio_data in audio_features_data:
-                    audio_feature = AudioFeatures(**audio_data)
-                    session.add(audio_feature)
-                await session.commit()
-                self.stats['audio_features']['imported'] += len(audio_features_data)
-            
-        except Exception as e:
-            await session.rollback()
-            logger.error(f"❌ Failed to insert audio features batch: {e}")
-            
-            # Individual insert fallback with proper conflict handling
-            successful = 0
-            for audio_data in audio_features_data:
-                try:
-                    if self.skip_duplicates:
-                        # Check if audio features already exist before inserting
-                        existing = await session.get(AudioFeatures, audio_data['track_id'])
-                        if existing:
-                            logger.debug(f"Audio features for track {audio_data['track_id']} already exist, skipping")
-                            self.stats['audio_features']['skipped'] += 1
-                            continue
-                    
-                    audio_feature = AudioFeatures(**audio_data)
-                    session.add(audio_feature)
-                    await session.commit()
-                    successful += 1
-                    
-                except IntegrityError as ie:
-                    await session.rollback()
-                    if self.skip_duplicates and "duplicate key" in str(ie).lower():
-                        logger.debug(f"Skipping duplicate audio features for track {audio_data.get('track_id', 'unknown')}")
-                        self.stats['audio_features']['skipped'] += 1
-                    else:
-                        logger.debug(f"Failed to insert audio features for track {audio_data.get('track_id', 'unknown')}: {ie}")
-                        self.stats['audio_features']['errors'] += 1
-                except Exception as individual_error:
-                    await session.rollback()
-                    logger.debug(f"Failed to insert audio features for track {audio_data.get('track_id', 'unknown')}: {individual_error}")
-                    self.stats['audio_features']['errors'] += 1
-            
-            logger.info(f"Salvaged {successful}/{len(audio_features_data)} audio features from failed batch")
-            self.stats['audio_features']['imported'] += successful
+        await self._generic_bulk_insert(session, audio_features_data, AudioFeatures, 'audio_features', 'track_id')
     
     async def import_lyrics_features(self, df: pd.DataFrame, session) -> None:
         """Import lyrics features"""
@@ -879,58 +675,7 @@ class DataImporter:
     
     async def _bulk_insert_lyrics_features(self, session, lyrics_features_data: List[Dict]) -> None:
         """Bulk insert lyrics features with proper conflict handling"""
-        try:
-            if self.skip_duplicates:
-                # Use ON CONFLICT DO NOTHING for bulk insert
-                stmt = insert(LyricsFeatures).values(lyrics_features_data)
-                stmt = stmt.on_conflict_do_nothing(index_elements=['track_id'])
-                await session.execute(stmt)
-                await session.commit()
-                self.stats['lyrics_features']['imported'] += len(lyrics_features_data)
-            else:
-                # Regular bulk insert without conflict handling
-                for lyrics_data in lyrics_features_data:
-                    lyrics_feature = LyricsFeatures(**lyrics_data)
-                    session.add(lyrics_feature)
-                await session.commit()
-                self.stats['lyrics_features']['imported'] += len(lyrics_features_data)
-            
-        except Exception as e:
-            await session.rollback()
-            logger.error(f"❌ Failed to insert lyrics features batch: {e}")
-            
-            # Individual insert fallback with proper conflict handling
-            successful = 0
-            for lyrics_data in lyrics_features_data:
-                try:
-                    if self.skip_duplicates:
-                        # Check if lyrics features already exist before inserting
-                        existing = await session.get(LyricsFeatures, lyrics_data['track_id'])
-                        if existing:
-                            logger.debug(f"Lyrics features for track {lyrics_data['track_id']} already exist, skipping")
-                            self.stats['lyrics_features']['skipped'] += 1
-                            continue
-                    
-                    lyrics_feature = LyricsFeatures(**lyrics_data)
-                    session.add(lyrics_feature)
-                    await session.commit()
-                    successful += 1
-                    
-                except IntegrityError as ie:
-                    await session.rollback()
-                    if self.skip_duplicates and "duplicate key" in str(ie).lower():
-                        logger.debug(f"Skipping duplicate lyrics features for track {lyrics_data.get('track_id', 'unknown')}")
-                        self.stats['lyrics_features']['skipped'] += 1
-                    else:
-                        logger.debug(f"Failed to insert lyrics features for track {lyrics_data.get('track_id', 'unknown')}: {ie}")
-                        self.stats['lyrics_features']['errors'] += 1
-                except Exception as individual_error:
-                    await session.rollback()
-                    logger.debug(f"Failed to insert lyrics features for track {lyrics_data.get('track_id', 'unknown')}: {individual_error}")
-                    self.stats['lyrics_features']['errors'] += 1
-            
-            logger.info(f"Salvaged {successful}/{len(lyrics_features_data)} lyrics features from failed batch")
-            self.stats['lyrics_features']['imported'] += successful
+        await self._generic_bulk_insert(session, lyrics_features_data, LyricsFeatures, 'lyrics_features', 'track_id')
     
     async def check_existing_data(self, session) -> Dict[str, int]:
         """Check how much data already exists in the database"""
@@ -1117,6 +862,62 @@ class DataImporter:
         
         if total_quality_fixes > 0:
             logger.info(f"🔧 {total_quality_fixes} data quality issues were automatically fixed")
+
+    async def _generic_bulk_insert(self, session, data_list: List[Dict], model_class, table_name: str, unique_column: str = 'id') -> None:
+        """Generic bulk insert method with proper conflict handling"""
+        try:
+            if self.skip_duplicates:
+                # Use ON CONFLICT DO NOTHING for bulk insert
+                stmt = insert(model_class).values(data_list)
+                stmt = stmt.on_conflict_do_nothing(index_elements=[unique_column])
+                await session.execute(stmt)
+                await session.commit()
+                self.stats[table_name]['imported'] += len(data_list)
+            else:
+                # Regular bulk insert without conflict handling
+                for item_data in data_list:
+                    item = model_class(**item_data)
+                    session.add(item)
+                await session.commit()
+                self.stats[table_name]['imported'] += len(data_list)
+            
+        except Exception as e:
+            await session.rollback()
+            logger.error(f"❌ Failed to insert {table_name} batch: {e}")
+            
+            # Individual insert fallback with proper conflict handling
+            successful = 0
+            for item_data in data_list:
+                try:
+                    if self.skip_duplicates:
+                        # Check if item already exists before inserting
+                        unique_value = item_data[unique_column]
+                        existing = await session.get(model_class, unique_value)
+                        if existing:
+                            logger.debug(f"{table_name.capitalize()} {unique_value} already exists, skipping")
+                            self.stats[table_name]['skipped'] += 1
+                            continue
+                    
+                    item = model_class(**item_data)
+                    session.add(item)
+                    await session.commit()
+                    successful += 1
+                    
+                except IntegrityError as ie:
+                    await session.rollback()
+                    if self.skip_duplicates and "duplicate key" in str(ie).lower():
+                        logger.debug(f"Skipping duplicate {table_name} {item_data.get(unique_column, 'unknown')}")
+                        self.stats[table_name]['skipped'] += 1
+                    else:
+                        logger.debug(f"Failed to insert {table_name} {item_data.get(unique_column, 'unknown')}: {ie}")
+                        self.stats[table_name]['errors'] += 1
+                except Exception as individual_error:
+                    await session.rollback()
+                    logger.debug(f"Failed to insert {table_name} {item_data.get(unique_column, 'unknown')}: {individual_error}")
+                    self.stats[table_name]['errors'] += 1
+            
+            logger.info(f"Salvaged {successful}/{len(data_list)} {table_name} from failed batch")
+            self.stats[table_name]['imported'] += successful
 
 
 async def main():
