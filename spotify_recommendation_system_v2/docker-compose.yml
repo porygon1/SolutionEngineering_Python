@@ -31,16 +31,27 @@ services:
     volumes:
       - ../data:/app/data
       - ../data/models:/app/models  # Direct mount to data/models
-      - ../scripts/Models:/app/notebooks  # Mount notebooks for model training
+      - ../scripts/Models:/app/notebooks  # Mount notebooks for reference
+      - /tmp:/tmp  # For success/failure markers
     environment:
       - DATABASE_URL=postgresql://spotify_user:spotify_password@database:5432/spotify_recommendations
       - DATA_PATH=/app/data
       - MODELS_PATH=/app/models
       - NOTEBOOKS_PATH=/app/notebooks
       - PYTHONPATH=/app
+      - LOG_LEVEL=INFO
+      - FORCE_REGENERATE=${FORCE_REGENERATE:-false}  # Support force regeneration
+    command: ["python", "scripts/startup.py"]
     depends_on:
       database:
         condition: service_healthy
+    restart: "no"  # Don't restart automatically
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/model_prep_success"]
+      interval: 30s
+      timeout: 10s
+      retries: 1
+      start_period: 300s  # Give 5 minutes for model generation
     networks:
       - spotify-network
     profiles:
@@ -67,6 +78,8 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      model-prep:
+        condition: service_completed_successfully
     restart: "no"  # Don't restart automatically to prevent infinite loops
     healthcheck:
       test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]  # Simple health check

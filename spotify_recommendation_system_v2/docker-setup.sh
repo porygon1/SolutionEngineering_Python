@@ -89,13 +89,38 @@ setup_environment() {
 prepare_models() {
     print_status "Preparing ML models..."
     
-    # Run model preparation
+    # Check if data files exist first
+    if [ ! -f "../data/raw/spotify_tracks.csv" ]; then
+        print_error "Required data file not found: ../data/raw/spotify_tracks.csv"
+        print_warning "Please ensure your data files are in the correct location before running setup"
+        return 1
+    fi
+    
+    print_status "Found required data files. Starting model generation..."
+    print_warning "This process may take 5-15 minutes depending on your system..."
+    
+    # Run model preparation with verbose output
     docker-compose --profile setup run --rm model-prep
     
-    if [ $? -eq 0 ]; then
+    # Check if model preparation was successful
+    if [ -f "/tmp/model_prep_success" ]; then
         print_success "Models prepared successfully!"
-    else
+        
+        # List generated models
+        print_status "Generated model files:"
+        if [ -d "../data/models" ]; then
+            ls -la ../data/models/*.pkl 2>/dev/null | head -10
+            echo "..."
+            echo "Total model files: $(ls -1 ../data/models/*.pkl 2>/dev/null | wc -l)"
+        fi
+        
+        return 0
+    elif [ -f "/tmp/model_prep_failure" ]; then
         print_error "Model preparation failed!"
+        print_error "Error: $(cat /tmp/model_prep_failure 2>/dev/null || echo 'Unknown error')"
+        return 1
+    else
+        print_error "Model preparation status unknown!"
         return 1
     fi
 }
